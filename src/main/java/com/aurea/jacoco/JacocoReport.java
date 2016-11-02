@@ -1,4 +1,4 @@
-package eloc.com.aurea;
+package com.aurea.jacoco;
 
 public class JacocoReport {
 
