@@ -1,2 +1,2 @@
-# eloc
-Effective Lines of Code
+# Jacoco-parser
+Parses jacoco reports
