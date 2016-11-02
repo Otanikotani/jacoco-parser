@@ -1,0 +1,7 @@
+GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,BRANCH_MISSED,BRANCH_COVERED,LINE_MISSED,LINE_COVERED,COMPLEXITY_MISSED,COMPLEXITY_COVERED,METHOD_MISSED,METHOD_COVERED
+Eloc,com.aurea.jacoco,Duplicate,52,0,0,0,12,0,7,0,7,0
+Eloc,com.aurea.jacoco,Main,559,0,24,0,106,0,29,0,17,0
+Eloc,com.aurea.jacoco,SettersGettersLocFinder,174,0,22,0,32,0,17,0,6,0
+Eloc,com.aurea.jacoco,JacocoReportParser,95,261,8,20,17,50,7,21,0,14
+Eloc,com.aurea.jacoco,JacocoReport,48,26,15,1,8,7,11,2,3,2
+Eloc,com.aurea.jacoco,Main.new Predicate() {...},32,0,0,0,4,0,2,0,2,0

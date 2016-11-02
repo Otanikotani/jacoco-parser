@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.97.7/css/materialize.min.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Main.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Eloc</a> &gt; <a href="index.source.html" class="el_package">com.aurea.jacoco</a> &gt; <span class="el_source">Main.java</span></div><div class="row"><h4 class="col s6">Main.java</h4><input class="col s6" id="first_name" type="text" oninput="filterTable('first_name')"/></div><pre class="source lang-java linenums">package com.aurea.jacoco;
+
+import com.google.common.base.Predicate;
+import com.google.common.base.Stopwatch;
+import com.google.common.collect.*;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+<span class="nc" id="L25">public class Main {</span>
+
+<span class="nc" id="L27">    private static final Logger logger = LogManager.getLogger(Main.class.getSimpleName());</span>
+
+<span class="nc" id="L29">    public static final Pattern duplicatePattern = Pattern.compile(&quot;.+lines (.+) to (.+) in (.+) \\((.+)\\)&quot;);</span>
+
+    public static void main(String[] args) throws IOException {
+<span class="nc" id="L32">        Stopwatch stopwatch = Stopwatch.createStarted();</span>
+<span class="nc bnc" id="L33" title="All 2 branches missed.">        if (args.length &lt; 2) {</span>
+<span class="nc" id="L34">            System.err.println(&quot;Usage: java -jar eloc.jar JACOCO_REPORT_DIR INTELLIJ_DUPLICATES_DIR&quot;);</span>
+<span class="nc" id="L35">            System.exit(-1);</span>
+        }
+
+<span class="nc" id="L38">        final String jacocoDir = args[0];</span>
+<span class="nc" id="L39">        final String intellijDuplicatesReportDir = args[1];</span>
+<span class="nc" id="L40">        final Multimap&lt;JacocoReport, Range&gt; coveredLines = getCoveredLines(jacocoDir);</span>
+<span class="nc" id="L41">        final ImmutableMap&lt;String, JacocoReport&gt; byName = Maps.uniqueIndex(coveredLines.keySet(), JacocoReport::getName);</span>
+<span class="nc" id="L42">        final Multimap&lt;String, Duplicate&gt; duplicates = getDuplicates(intellijDuplicatesReportDir);</span>
+
+<span class="nc" id="L44">        Multimap&lt;String, Duplicate&gt; filtered = Multimaps.filterEntries(duplicates, new Predicate&lt;Map.Entry&lt;String, Duplicate&gt;&gt;() {</span>
+            @Override
+            public boolean apply(Map.Entry&lt;String, Duplicate&gt; entry) {
+<span class="nc" id="L47">                Collection&lt;Range&gt; coveredRanges = coveredLines.get(byName.get(entry.getKey()));</span>
+<span class="nc" id="L48">                Range&lt;Integer&gt; duplicatedLines = entry.getValue().getLines();</span>
+<span class="nc" id="L49">                return coveredRanges.stream().noneMatch(duplicatedLines::isConnected);</span>
+            }
+        });
+
+<span class="nc" id="L53">        Map&lt;Integer, Integer&gt; uniqueByGroup = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L54">        filtered.values().stream()</span>
+<span class="nc" id="L55">                .forEach(duplicate -&gt; uniqueByGroup.putIfAbsent(duplicate.getGroup(), duplicate.distance()));</span>
+
+<span class="nc" id="L57">        ImmutableListMultimap&lt;Integer, Duplicate&gt; byGroup = Multimaps.index(duplicates.values(), Duplicate::getGroup);</span>
+<span class="nc" id="L58">        int totalNormalizedWin = byGroup.keySet().stream().mapToInt(key -&gt; {</span>
+<span class="nc" id="L59">            Collection&lt;Duplicate&gt; duplicatesInGroup = byGroup.get(key);</span>
+<span class="nc" id="L60">            int locs = duplicatesInGroup.stream().mapToInt(Duplicate::distance).min().getAsInt();</span>
+<span class="nc" id="L61">            int size = duplicatesInGroup.size();</span>
+<span class="nc" id="L62">            double complexity = Math.max(log(locs, 2), 1);</span>
+<span class="nc" id="L63">            return (int) (locs * (size - 1) / complexity);</span>
+<span class="nc" id="L64">        }).sum();</span>
+
+<span class="nc" id="L66">        int totalWin = byGroup.keySet().stream().mapToInt(key -&gt; {</span>
+<span class="nc" id="L67">            Collection&lt;Duplicate&gt; duplicatesInGroup = byGroup.get(key);</span>
+<span class="nc" id="L68">            int locs = duplicatesInGroup.stream().mapToInt(Duplicate::distance).min().getAsInt();</span>
+<span class="nc" id="L69">            int size = duplicatesInGroup.size();</span>
+<span class="nc" id="L70">            return locs * (size - 1);</span>
+<span class="nc" id="L71">        }).sum();</span>
+
+<span class="nc" id="L73">        System.out.println(&quot;Total win: &quot; + totalWin);</span>
+<span class="nc" id="L74">        System.out.println(&quot;Total normalized win: &quot; + totalNormalizedWin);</span>
+
+<span class="nc" id="L76">        int totalUncoveredDuplicates = uniqueByGroup.values().stream()</span>
+<span class="nc" id="L77">                .mapToInt(Integer::intValue)</span>
+<span class="nc" id="L78">                .sum();</span>
+<span class="nc" id="L79">        System.out.println(&quot;Total uncovered duplicates: &quot; + totalUncoveredDuplicates);</span>
+<span class="nc" id="L80">        Map&lt;String, Integer&gt; setterGetterLines = new SettersGettersLocFinder().findUncoveredLinesInSettersGetters(jacocoDir);</span>
+<span class="nc" id="L81">        int totalSetterGetterLines = setterGetterLines.values().stream().mapToInt(Integer::intValue).sum();</span>
+<span class="nc" id="L82">        System.out.println(&quot;Total uncovered lines in setters-getters: &quot; + totalSetterGetterLines);</span>
+
+<span class="nc" id="L84">        logger.info(&quot;Executed in &quot; + stopwatch.elapsed(TimeUnit.MILLISECONDS) + &quot; ms.&quot;);</span>
+<span class="nc" id="L85">    }</span>
+
+    private static void printDuplicatesPerClass(Multimap&lt;String, Duplicate&gt; filtered) {
+<span class="nc" id="L88">        TreeMap&lt;Integer, String&gt; sortedByTotalDuplicatedLines = new TreeMap&lt;&gt;();</span>
+<span class="nc" id="L89">        filtered.keySet().forEach(className -&gt; {</span>
+<span class="nc" id="L90">            int total = filtered.get(className).stream().mapToInt(Duplicate::distance).sum();</span>
+<span class="nc" id="L91">            sortedByTotalDuplicatedLines.put(total, className);</span>
+<span class="nc" id="L92">        });</span>
+<span class="nc" id="L93">        sortedByTotalDuplicatedLines.descendingKeySet().forEach(key -&gt; {</span>
+<span class="nc" id="L94">            System.out.println(String.format(&quot;%s: %d&quot;, sortedByTotalDuplicatedLines.get(key), key));</span>
+<span class="nc" id="L95">        });</span>
+<span class="nc" id="L96">    }</span>
+
+    private static Multimap&lt;JacocoReport, Range&gt; getCoveredLines(String jacocoDir) throws IOException {
+<span class="nc" id="L99">        Path jacocoRoot = Paths.get(jacocoDir);</span>
+<span class="nc" id="L100">        Multimap&lt;JacocoReport, Range&gt; coveredLines = Multimaps.synchronizedListMultimap(ArrayListMultimap.create());</span>
+
+<span class="nc" id="L102">        Stream&lt;File&gt; javaCoverageReportsStream = Files.walk(jacocoRoot)</span>
+<span class="nc" id="L103">                .map(Path::toFile)</span>
+<span class="nc bnc" id="L104" title="All 4 branches missed.">                .filter(f -&gt; !f.isDirectory() &amp;&amp; f.getName().endsWith(&quot;.java.html&quot;));</span>
+
+<span class="nc" id="L106">        javaCoverageReportsStream.forEach(reportFile -&gt; {</span>
+<span class="nc" id="L107">            String name = reportFile.getParentFile().getName() + &quot;.&quot; + reportFile.getName().replace(&quot;.java.html&quot;, &quot;&quot;);</span>
+            try {
+<span class="nc" id="L109">                Document doc = Jsoup.parse(reportFile, &quot;UTF-8&quot;);</span>
+<span class="nc" id="L110">                Elements lines = doc.select(&quot;span[id^=L]&quot;);</span>
+<span class="nc" id="L111">                int totalLines = lines.size();</span>
+<span class="nc" id="L112">                JacocoReport report = new JacocoReport(name, totalLines);</span>
+<span class="nc" id="L113">                boolean inRange = false;</span>
+<span class="nc" id="L114">                int from = 0;</span>
+<span class="nc bnc" id="L115" title="All 2 branches missed.">                for (Element line : lines) {</span>
+<span class="nc bnc" id="L116" title="All 4 branches missed.">                    boolean isCovered = line.hasClass(&quot;fc&quot;) || line.hasClass(&quot;pc&quot;); //Consider partially covered lines as covered too</span>
+<span class="nc bnc" id="L117" title="All 4 branches missed.">                    if (isCovered &amp;&amp; !inRange) {</span>
+<span class="nc" id="L118">                        from = Integer.parseInt(line.id().substring(1));</span>
+<span class="nc" id="L119">                        inRange = true;</span>
+                    }
+<span class="nc bnc" id="L121" title="All 4 branches missed.">                    if (!isCovered &amp;&amp; inRange) {</span>
+<span class="nc" id="L122">                        inRange = false;</span>
+<span class="nc" id="L123">                        int to = Integer.parseInt(line.id().substring(1)) - 1;</span>
+<span class="nc" id="L124">                        coveredLines.put(report, Range.closed(from, to));</span>
+                    }
+<span class="nc" id="L126">                }</span>
+<span class="nc bnc" id="L127" title="All 2 branches missed.">                if (coveredLines.get(report).isEmpty()) {</span>
+<span class="nc" id="L128">                    coveredLines.put(report, Range.closed(0, 0));</span>
+                }
+<span class="nc" id="L130">            } catch (IOException e) {</span>
+<span class="nc" id="L131">                logger.error(e.getMessage(), e);</span>
+<span class="nc" id="L132">            }</span>
+<span class="nc" id="L133">        });</span>
+<span class="nc" id="L134">        return coveredLines;</span>
+    }
+
+    private static Multimap&lt;String, Duplicate&gt; getDuplicates(String duplicatesDir) throws IOException {
+<span class="nc" id="L138">        Path duplicatesRoot = Paths.get(duplicatesDir);</span>
+<span class="nc" id="L139">        Multimap&lt;String, Duplicate&gt; duplicates = Multimaps.synchronizedListMultimap(ArrayListMultimap.create());</span>
+
+<span class="nc" id="L141">        Stream&lt;Path&gt; duplicateReportDirs = Files.list(duplicatesRoot).filter(Files::isDirectory);</span>
+<span class="nc" id="L142">        duplicateReportDirs.parallel().forEach(p -&gt; {</span>
+            try {
+<span class="nc" id="L144">                final int group = Integer.parseInt(p.toFile().getName().replace(&quot;group&quot;, &quot;&quot;));</span>
+<span class="nc" id="L145">                List&lt;Path&gt; duplicateReports = Files.list(p).collect(Collectors.toList());</span>
+<span class="nc" id="L146">                final int timesDuplicated = duplicateReports.size();</span>
+<span class="nc" id="L147">                duplicateReports.stream().forEach(reportPath -&gt; {</span>
+                    try {
+<span class="nc" id="L149">                        Document doc = Jsoup.parse(reportPath.toFile(), &quot;UTF-8&quot;);</span>
+<span class="nc" id="L150">                        String header = doc.select(&quot;h4&quot;).text();</span>
+<span class="nc" id="L151">                        Matcher m = duplicatePattern.matcher(header);</span>
+<span class="nc bnc" id="L152" title="All 2 branches missed.">                        if (m.find()) {</span>
+<span class="nc" id="L153">                            int from = Integer.parseInt(m.group(1).replace(&quot;,&quot;, &quot;&quot;));</span>
+<span class="nc" id="L154">                            int to = Integer.parseInt(m.group(2).replace(&quot;,&quot;, &quot;&quot;));</span>
+<span class="nc" id="L155">                            String className = m.group(4) + &quot;.&quot; + m.group(3);</span>
+<span class="nc" id="L156">                            duplicates.put(className, new Duplicate(timesDuplicated, Range.closed(from, to), group, className));</span>
+                        }
+<span class="nc" id="L158">                    } catch (IOException e) {</span>
+<span class="nc" id="L159">                        logger.error(&quot;Failed to read: &quot; + reportPath);</span>
+<span class="nc" id="L160">                    }</span>
+
+<span class="nc" id="L162">                });</span>
+
+<span class="nc" id="L164">            } catch (IOException e) {</span>
+<span class="nc" id="L165">                logger.error(e.getMessage(), e);</span>
+<span class="nc" id="L166">            }</span>
+<span class="nc" id="L167">        });</span>
+<span class="nc" id="L168">        return duplicates;</span>
+    }
+
+    private static double log(int x, int base) {
+<span class="nc" id="L172">        return Math.log(x) / Math.log(base);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.8.201608021213</span></div></body></html>
