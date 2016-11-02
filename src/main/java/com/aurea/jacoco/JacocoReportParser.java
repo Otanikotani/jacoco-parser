@@ -33,7 +33,7 @@ public class JacocoReportParser {
         this.pathToJacocoReport = pathToJacocoReport;
     }
 
-    Map<JacocoReport, List<Range>> findCoveredRanges() {
+    public Map<JacocoReport, List<Range>> findCoveredRanges() {
         try {
             Map<JacocoReport, List<Range>> coveredRanges = new ConcurrentHashMap<>();
             getSourceReports().parallel().forEach(reportFile -> {
@@ -69,7 +69,7 @@ public class JacocoReportParser {
         }
     }
 
-    Map<JacocoReport, Set<String>> findCoveredMethods() {
+    public Map<JacocoReport, Set<String>> findCoveredMethods() {
         try {
             Map<JacocoReport, Set<String>> coveredMethods = new ConcurrentHashMap<>();
 
