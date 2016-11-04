@@ -1,21 +1,21 @@
 package com.aurea.jacoco;
 
-public class JacocoReport {
+public class ClassCoverage {
 
     private final String name;
-    private final int totalLines;
+    private final int lines;
 
-    JacocoReport(String name, int  totalLines) {
+    ClassCoverage(String name, int lines) {
         this.name = name;
-        this.totalLines = totalLines;
+        this.lines = lines;
     }
 
     public String getName() {
         return name;
     }
 
-    public int getTotalLines() {
-        return totalLines;
+    public int getLines() {
+        return lines;
     }
 
     @Override
@@ -23,9 +23,9 @@ public class JacocoReport {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        JacocoReport that = (JacocoReport) o;
+        ClassCoverage that = (ClassCoverage) o;
 
-        if (totalLines != that.totalLines) return false;
+        if (lines != that.lines) return false;
         if (name != null ? !name.equals(that.name) : that.name != null) return false;
 
         return true;
@@ -34,7 +34,7 @@ public class JacocoReport {
     @Override
     public int hashCode() {
         int result = name != null ? name.hashCode() : 0;
-        result = 31 * result + totalLines;
+        result = 31 * result + lines;
         return result;
     }
 }

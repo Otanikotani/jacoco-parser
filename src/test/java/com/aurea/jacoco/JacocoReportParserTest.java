@@ -19,9 +19,9 @@ public class JacocoReportParserTest {
         URL jacoco = getClass().getResource("report");
         Path path = Paths.get(jacoco.toURI());
 
-        Map<JacocoReport, List<Range>> result = new JacocoReportParser(path).findCoveredRanges();
+        Map<ClassCoverage, List<Range>> result = new JacocoReportParser(path).findCoveredRanges();
 
-        assertThat(result.get(new JacocoReport("com.aurea.jacoco.JacocoReportParser", 67))).isNotEmpty();
+        assertThat(result.get(new ClassCoverage("com.aurea.jacoco.JacocoReportParser", 67))).isNotEmpty();
     }
 
     @Test
@@ -29,8 +29,8 @@ public class JacocoReportParserTest {
         URL jacoco = getClass().getResource("report");
         Path path = Paths.get(jacoco.toURI());
 
-        Map<JacocoReport, Set<String>> result = new JacocoReportParser(path).findCoveredMethods();
+        Map<ClassCoverage, Set<MethodCoverage>> result = new JacocoReportParser(path).findCoveredMethods();
 
-        assertThat(result.get(new JacocoReport("com.aurea.jacoco.JacocoReportParser", 67))).isNotEmpty();
+        assertThat(result.get(new ClassCoverage("com.aurea.jacoco.JacocoReportParser", 67))).isNotEmpty();
     }
 }

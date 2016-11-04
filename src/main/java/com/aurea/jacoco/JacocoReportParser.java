@@ -21,8 +21,8 @@ public class JacocoReportParser {
 
     private static final Logger logger = LogManager.getLogger(JacocoReportParser.class.getSimpleName());
 
-    private static final Map<JacocoReport, List<Range>> EMPTY_LINES_RESULT = Collections.emptyMap();
-    private static final Map<JacocoReport, Set<String>> EMPTY_METHODS_RESULT = Collections.emptyMap();
+    private static final Map<ClassCoverage, List<Range>> EMPTY_LINES_RESULT = Collections.emptyMap();
+    private static final Map<ClassCoverage, Set<MethodCoverage>> EMPTY_METHODS_RESULT = Collections.emptyMap();
     private static final int NUMBER_OF_LINES_COLUMN = 8;
     private static final int NUMBER_OF_MISSING_LINES_COLUMN = 7;
 
@@ -33,15 +33,15 @@ public class JacocoReportParser {
         this.pathToJacocoReport = pathToJacocoReport;
     }
 
-    public Map<JacocoReport, List<Range>> findCoveredRanges() {
+    public Map<ClassCoverage, List<Range>> findCoveredRanges() {
         try {
-            Map<JacocoReport, List<Range>> coveredRanges = new ConcurrentHashMap<>();
+            Map<ClassCoverage, List<Range>> coveredRanges = new ConcurrentHashMap<>();
             getSourceReports().parallel().forEach(reportFile -> {
                 String name = reportFile.getParentFile().getName() + "." + reportFile.getName().replace(".java.html", "");
                 try {
                     final Document doc = Jsoup.parse(reportFile, "UTF-8");
                     final Elements lines = doc.select("span[id^=L]");
-                    final JacocoReport report = new JacocoReport(name, lines.size());
+                    final ClassCoverage report = new ClassCoverage(name, lines.size());
                     boolean inRange = false;
                     int from = 0;
                     ArrayList<Range> ranges = new ArrayList<>();
@@ -69,9 +69,9 @@ public class JacocoReportParser {
         }
     }
 
-    public Map<JacocoReport, Set<String>> findCoveredMethods() {
+    public Map<ClassCoverage, Set<MethodCoverage>> findCoveredMethods() {
         try {
-            Map<JacocoReport, Set<String>> coveredMethods = new ConcurrentHashMap<>();
+            Map<ClassCoverage, Set<MethodCoverage>> coveredMethods = new ConcurrentHashMap<>();
 
             getFileReports().parallel().forEach(reportFile -> {
                 String name = reportFile.getParentFile().getName() + "." + reportFile.getName().replace(".html", "");
@@ -79,15 +79,15 @@ public class JacocoReportParser {
                     final Document doc = Jsoup.parse(reportFile, "UTF-8");
                     final Elements methods = doc.select("table.coverage > tbody > tr");
                     final Element total = doc.select("table.coverage > tfoot > tr").first();
-                    final JacocoReport report = new JacocoReport(name, Integer.parseInt(total.child(NUMBER_OF_LINES_COLUMN).text()));
-                    Set<String> methodNames = new HashSet<>();
-                    coveredMethods.put(report, methodNames);
+                    final ClassCoverage report = new ClassCoverage(name, Integer.parseInt(total.child(NUMBER_OF_LINES_COLUMN).text()));
+                    Set<MethodCoverage> methodCoverages = new HashSet<>();
+                    coveredMethods.put(report, methodCoverages);
                     for (Element method : methods) {
                         int linesInMethod = Integer.parseInt(method.child(NUMBER_OF_LINES_COLUMN).text());
                         int missingLinesInMethod = Integer.parseInt(method.child(NUMBER_OF_MISSING_LINES_COLUMN).text());
                         if (linesInMethod != missingLinesInMethod) {
                             String methodName = method.firstElementSibling().firstElementSibling().text();
-                            methodNames.add(methodName);
+                            methodCoverages.add(new MethodCoverage(methodName, linesInMethod));
                         }
                     }
                 } catch (IOException e) {
