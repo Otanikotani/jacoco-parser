@@ -87,15 +87,9 @@ public class JacocoReportParser {
                     for (Element method : methods) {
                         int linesInMethod = Integer.parseInt(method.child(NUMBER_OF_LINES_COLUMN).text().replace(",", ""));
                         int missingLinesInMethod = Integer.parseInt(method.child(NUMBER_OF_MISSING_LINES_COLUMN).text().replace(",", ""));
-                        Element td = method.firstElementSibling();
-                        if (null != td) {
-                            Element a = td.firstElementSibling();
-                            if (null != a) {
-                                String methodName = a.text();
-                                if (!methodName.contains("{")) {
-                                    methodCoverages.add(new MethodCoverage(methodName, linesInMethod - missingLinesInMethod, missingLinesInMethod));
-                                }
-                            }
+                        String methodName = method.child(0).child(0).text();
+                        if (!methodName.contains("{")) {
+                            methodCoverages.add(new MethodCoverage(methodName, linesInMethod - missingLinesInMethod, missingLinesInMethod));
                         }
                     }
                 } catch (Exception e) {

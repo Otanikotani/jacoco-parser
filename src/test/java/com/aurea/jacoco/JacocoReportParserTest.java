@@ -34,10 +34,12 @@ public class JacocoReportParserTest {
         assertThat(result.get(new ClassCoverage("com.aurea.jacoco.JacocoReportParser", 67))).isNotEmpty();
     }
 
-    @Test
-    public void testAce() throws Exception {
-        Map<ClassCoverage, Set<MethodCoverage>> result =
-                new JacocoReportParser(Paths.get("C:/crossover/aurea/ace/coverage")).findCoveredMethods();
-
-    }
+//    @Test
+//    public void testAce() throws Exception {
+//        Map<ClassCoverage, Set<MethodCoverage>> result =
+//                new JacocoReportParser(Paths.get("C:/crossover/aurea/ace/coverage")).findCoveredMethods();
+//
+//        Set<MethodCoverage> methods = result.get(new ClassCoverage("fr.generix.metier.server.BusinessStdClientViewObjectProxy", 58));
+//        assertThat(methods).hasSize(21);
+//    }
 }
