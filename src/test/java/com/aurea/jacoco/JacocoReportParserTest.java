@@ -33,4 +33,11 @@ public class JacocoReportParserTest {
 
         assertThat(result.get(new ClassCoverage("com.aurea.jacoco.JacocoReportParser", 67))).isNotEmpty();
     }
+
+    @Test
+    public void test_() throws Exception {
+        Map<ClassCoverage, Set<MethodCoverage>> result =
+                new JacocoReportParser(Paths.get("C:/crossover/aurea/jtob_adds/after/jacoco")).findCoveredMethods();
+
+    }
 }

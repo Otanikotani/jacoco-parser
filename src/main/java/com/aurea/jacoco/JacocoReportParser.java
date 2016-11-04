@@ -60,6 +60,8 @@ public class JacocoReportParser {
                     }
                 } catch (IOException e) {
                     logger.error("Failed to parse file: " + reportFile.getName(), e);
+                } catch (Exception e) {
+                    logger.error("Failed abrupbtly: " + reportFile.getName());
                 }
             });
             return coveredRanges;
@@ -72,21 +74,28 @@ public class JacocoReportParser {
     public Map<ClassCoverage, Set<MethodCoverage>> findCoveredMethods() {
         try {
             Map<ClassCoverage, Set<MethodCoverage>> coveredMethods = new ConcurrentHashMap<>();
-
             getFileReports().parallel().forEach(reportFile -> {
                 String name = reportFile.getParentFile().getName() + "." + reportFile.getName().replace(".html", "");
                 try {
                     final Document doc = Jsoup.parse(reportFile, "UTF-8");
                     final Elements methods = doc.select("table.coverage > tbody > tr");
                     final Element total = doc.select("table.coverage > tfoot > tr").first();
-                    final ClassCoverage report = new ClassCoverage(name, Integer.parseInt(total.child(NUMBER_OF_LINES_COLUMN).text()));
+                    final ClassCoverage report = new ClassCoverage(name, Integer.parseInt(total.child(NUMBER_OF_LINES_COLUMN).text().replace(",", "")));
                     Set<MethodCoverage> methodCoverages = new HashSet<>();
                     coveredMethods.put(report, methodCoverages);
                     for (Element method : methods) {
-                        int linesInMethod = Integer.parseInt(method.child(NUMBER_OF_LINES_COLUMN).text());
-                        int missingLinesInMethod = Integer.parseInt(method.child(NUMBER_OF_MISSING_LINES_COLUMN).text());
-                        String methodName = method.firstElementSibling().firstElementSibling().text();
-                        methodCoverages.add(new MethodCoverage(methodName, linesInMethod - missingLinesInMethod, missingLinesInMethod));
+                        int linesInMethod = Integer.parseInt(method.child(NUMBER_OF_LINES_COLUMN).text().replace(",", ""));
+                        int missingLinesInMethod = Integer.parseInt(method.child(NUMBER_OF_MISSING_LINES_COLUMN).text().replace(",", ""));
+                        Element td = method.firstElementSibling();
+                        if (null != td) {
+                            Element a = td.firstElementSibling();
+                            if (null != a) {
+                                String methodName = a.text();
+                                if (!methodName.contains("{")) {
+                                    methodCoverages.add(new MethodCoverage(methodName, linesInMethod - missingLinesInMethod, missingLinesInMethod));
+                                }
+                            }
+                        }
                     }
                 } catch (IOException e) {
                     logger.error("Failed to parse file: " + reportFile.getName(), e);
@@ -106,6 +115,7 @@ public class JacocoReportParser {
     private Stream<File> getFileReports() throws IOException {
         return mapToFilesOnly().filter(f -> f.getName().endsWith(".html")
                 && !f.getName().endsWith("index.html")
+                && !f.getName().endsWith("index.source.html")
                 && !f.getName().endsWith("jacoco-sessions.html")
                 && !f.getName().endsWith(".java.html"));
     }
