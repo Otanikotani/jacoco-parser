@@ -21,7 +21,7 @@ public class JacocoReportParserTest {
 
         Map<ClassCoverage, List<Range>> result = new JacocoReportParser(path).findCoveredRanges();
 
-        assertThat(result.get(new ClassCoverage("com.aurea.jacoco.JacocoReportParser", 67))).isNotEmpty();
+        assertThat(result.get(new ClassCoverage("com.aurea.jacoco.JacocoReportParser", 50, 17))).isNotEmpty();
     }
 
     @Test
@@ -31,7 +31,7 @@ public class JacocoReportParserTest {
 
         Map<ClassCoverage, Set<MethodCoverage>> result = new JacocoReportParser(path).findCoveredMethods();
 
-        assertThat(result.get(new ClassCoverage("com.aurea.jacoco.JacocoReportParser", 67))).isNotEmpty();
+        assertThat(result.get(new ClassCoverage("com.aurea.jacoco.JacocoReportParser", 50, 17))).isNotEmpty();
     }
 
 //    @Test
