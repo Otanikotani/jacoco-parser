@@ -85,10 +85,8 @@ public class JacocoReportParser {
                     for (Element method : methods) {
                         int linesInMethod = Integer.parseInt(method.child(NUMBER_OF_LINES_COLUMN).text());
                         int missingLinesInMethod = Integer.parseInt(method.child(NUMBER_OF_MISSING_LINES_COLUMN).text());
-                        if (linesInMethod != missingLinesInMethod) {
-                            String methodName = method.firstElementSibling().firstElementSibling().text();
-                            methodCoverages.add(new MethodCoverage(methodName, linesInMethod));
-                        }
+                        String methodName = method.firstElementSibling().firstElementSibling().text();
+                        methodCoverages.add(new MethodCoverage(methodName, linesInMethod - missingLinesInMethod, missingLinesInMethod));
                     }
                 } catch (IOException e) {
                     logger.error("Failed to parse file: " + reportFile.getName(), e);
