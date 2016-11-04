@@ -35,9 +35,9 @@ public class JacocoReportParserTest {
     }
 
     @Test
-    public void test_() throws Exception {
+    public void testAce() throws Exception {
         Map<ClassCoverage, Set<MethodCoverage>> result =
-                new JacocoReportParser(Paths.get("C:/crossover/aurea/jtob_adds/after/jacoco")).findCoveredMethods();
+                new JacocoReportParser(Paths.get("C:/crossover/aurea/ace/coverage")).findCoveredMethods();
 
     }
 }

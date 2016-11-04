@@ -2,6 +2,7 @@ package com.aurea.jacoco;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.*;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jsoup.Jsoup;
@@ -97,7 +98,7 @@ public class JacocoReportParser {
                             }
                         }
                     }
-                } catch (IOException e) {
+                } catch (Exception e) {
                     logger.error("Failed to parse file: " + reportFile.getName(), e);
                 }
             });
@@ -113,11 +114,14 @@ public class JacocoReportParser {
     }
 
     private Stream<File> getFileReports() throws IOException {
+
         return mapToFilesOnly().filter(f -> f.getName().endsWith(".html")
-                && !f.getName().endsWith("index.html")
-                && !f.getName().endsWith("index.source.html")
-                && !f.getName().endsWith("jacoco-sessions.html")
-                && !f.getName().endsWith(".java.html"));
+                && !StringUtils.endsWithAny(f.getName(),
+                ".java.html",
+                "index.html",
+                "index.source.html",
+                ".sessions.html",
+                "jacoco-sessions.html"));
     }
 
     private Stream<File> mapToFilesOnly() throws IOException {
