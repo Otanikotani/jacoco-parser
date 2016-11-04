@@ -5,7 +5,7 @@ public class MethodCoverage {
     private final int covered;
     private final int uncovered;
 
-    MethodCoverage(String name, int covered, int uncovered) {
+    public MethodCoverage(String name, int covered, int uncovered) {
         this.name = name;
         this.covered = covered;
         this.uncovered = uncovered;

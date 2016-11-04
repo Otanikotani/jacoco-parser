@@ -5,7 +5,7 @@ public class ClassCoverage {
     private final String name;
     private final int lines;
 
-    ClassCoverage(String name, int lines) {
+    public ClassCoverage(String name, int lines) {
         this.name = name;
         this.lines = lines;
     }
