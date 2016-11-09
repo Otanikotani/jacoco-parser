@@ -1,7 +1,8 @@
 package com.aurea.jacoco;
 
-import com.google.common.base.Preconditions;
-import com.google.common.collect.*;
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
+import com.google.common.collect.Range;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -18,64 +19,60 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
-public class JacocoReportParser {
+public class JacocoReport {
 
-    private static final Logger logger = LogManager.getLogger(JacocoReportParser.class.getSimpleName());
+    private static final Logger logger = LogManager.getLogger(JacocoReport.class.getSimpleName());
 
     private static final Map<ClassCoverage, List<Range>> EMPTY_LINES_RESULT = Collections.emptyMap();
     private static final Map<ClassCoverage, Set<MethodCoverage>> EMPTY_METHODS_RESULT = Collections.emptyMap();
     private static final int NUMBER_OF_LINES_COLUMN = 8;
     private static final int NUMBER_OF_MISSING_LINES_COLUMN = 7;
 
-    private final Path pathToJacocoReport;
+    private Path pathToJacocoReport;
 
-    public JacocoReportParser(Path pathToJacocoReport) {
-        Preconditions.checkNotNull(pathToJacocoReport, "Given path should not be null");
-        this.pathToJacocoReport = pathToJacocoReport;
-    }
-
-    public Map<ClassCoverage, List<Range>> findCoveredRanges() {
-        try {
-            Map<ClassCoverage, List<Range>> coveredRanges = new ConcurrentHashMap<>();
-            getSourceReports().parallel().forEach(reportFile -> {
-                String name = reportFile.getParentFile().getName() + "." + reportFile.getName().replace(".java.html", "");
+    private final Supplier<Map<ClassCoverage, List<Range>>> rangesCache = Suppliers.memoize(() -> {
                 try {
-                    final Document doc = Jsoup.parse(reportFile, "UTF-8");
-                    final Elements lines = doc.select("span[id^=L]");
-                    final Elements uncoveredLines = doc.select("span.nc");
-                    final Elements coveredLines = doc.select("span.fc");
-                    final Elements partiallyCoveredLines = doc.select("span.pc");
-                    final ClassCoverage report = new ClassCoverage(name, coveredLines.size() + partiallyCoveredLines.size(), uncoveredLines.size());
-                    boolean inRange = false;
-                    int from = 0;
-                    ArrayList<Range> ranges = new ArrayList<>();
-                    coveredRanges.put(report, ranges);
-                    for (Element line : lines) {
-                        boolean isCovered = isFullyCovered(line) || isPartiallyCovered(line);
-                        if (isCovered && !inRange) {
-                            from = Integer.parseInt(line.id().substring(1));
-                            inRange = true;
+                    Map<ClassCoverage, List<Range>> coveredRanges = new ConcurrentHashMap<>();
+                    getSourceReports().parallel().forEach(reportFile -> {
+                        String name = reportFile.getParentFile().getName() + "." + reportFile.getName().replace(".java.html", "");
+                        try {
+                            final Document doc = Jsoup.parse(reportFile, "UTF-8");
+                            final Elements lines = doc.select("span[id^=L]");
+                            final Elements uncoveredLines = doc.select("span.nc");
+                            final Elements coveredLines = doc.select("span.fc");
+                            final Elements partiallyCoveredLines = doc.select("span.pc");
+                            final ClassCoverage report = new ClassCoverage(name, coveredLines.size() + partiallyCoveredLines.size(), uncoveredLines.size());
+                            boolean inRange = false;
+                            int from = 0;
+                            ArrayList<Range> ranges = new ArrayList<>();
+                            coveredRanges.put(report, ranges);
+                            for (Element line : lines) {
+                                boolean isCovered = isFullyCovered(line) || isPartiallyCovered(line);
+                                if (isCovered && !inRange) {
+                                    from = Integer.parseInt(line.id().substring(1));
+                                    inRange = true;
+                                }
+                                if (!isCovered && inRange) {
+                                    inRange = false;
+                                    int to = Integer.parseInt(line.id().substring(1)) - 1;
+                                    ranges.add(Range.closed(from, to));
+                                }
+                            }
+                        } catch (IOException e) {
+                            logger.error("Failed to parse file: " + reportFile.getName(), e);
+                        } catch (Exception e) {
+                            logger.error("Failed abruptly: " + reportFile.getName());
                         }
-                        if (!isCovered && inRange) {
-                            inRange = false;
-                            int to = Integer.parseInt(line.id().substring(1)) - 1;
-                            ranges.add(Range.closed(from, to));
-                        }
-                    }
+                    });
+                    return coveredRanges;
                 } catch (IOException e) {
-                    logger.error("Failed to parse file: " + reportFile.getName(), e);
-                } catch (Exception e) {
-                    logger.error("Failed abrupbtly: " + reportFile.getName());
+                    logger.error("Failed to find covered ranges in Jacoco report dir: " + pathToJacocoReport, e);
+                    return EMPTY_LINES_RESULT;
                 }
-            });
-            return coveredRanges;
-        } catch (IOException e) {
-            logger.error("Failed to find covered ranges in Jacoco report dir: " + pathToJacocoReport, e);
-            return EMPTY_LINES_RESULT;
-        }
-    }
+            }
+    );
 
-    public Map<ClassCoverage, Set<MethodCoverage>> findCoveredMethods() {
+    private final Supplier<Map<ClassCoverage, Set<MethodCoverage>>> methodsCache = Suppliers.memoize(() -> {
         try {
             Map<ClassCoverage, Set<MethodCoverage>> coveredMethods = new ConcurrentHashMap<>();
             getFileReports().parallel().forEach(reportFile -> {
@@ -106,6 +103,22 @@ public class JacocoReportParser {
             logger.error("Failed to find covered methods in Jacoco report dir: " + pathToJacocoReport, e);
             return EMPTY_METHODS_RESULT;
         }
+    });
+
+    public static JacocoReport fromHtml(Path pathToHtmlReport) {
+        return new JacocoReport(pathToHtmlReport);
+    }
+
+    private JacocoReport(Path pathToJacocoReport) {
+        this.pathToJacocoReport = pathToJacocoReport;
+    }
+
+    public Map<ClassCoverage, List<Range>> findCoveredRanges() {
+        return rangesCache.get();
+    }
+
+    public Map<ClassCoverage, Set<MethodCoverage>> findCoveredMethods() {
+        return methodsCache.get();
     }
 
     private Stream<File> getSourceReports() throws IOException {

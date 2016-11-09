@@ -44,4 +44,13 @@ public class MethodCoverage {
         result = 31 * result + uncovered;
         return result;
     }
+
+    @Override
+    public String toString() {
+        return "MethodCoverage{" +
+                "name='" + name + '\'' +
+                ", covered=" + covered +
+                ", uncovered=" + uncovered +
+                '}';
+    }
 }
