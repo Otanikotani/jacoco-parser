@@ -34,14 +34,15 @@ public class JacocoReport {
                 try {
                     Map<ClassCoverage, List<Range>> coveredRanges = new ConcurrentHashMap<>();
                     getSourceReports().parallel().forEach(reportFile -> {
-                        String name = reportFile.getParentFile().getName() + "." + reportFile.getName().replace(".java.html", "");
+                        String packageName = reportFile.getParentFile().getName();
+                        String className = reportFile.getName().replace(".java.html", "");
                         try {
                             final Document doc = Jsoup.parse(reportFile, "UTF-8");
                             final Elements lines = doc.select("span[id^=L]");
                             final Elements uncoveredLines = doc.select("span.nc");
                             final Elements coveredLines = doc.select("span.fc");
                             final Elements partiallyCoveredLines = doc.select("span.pc");
-                            final ClassCoverage report = new ClassCoverage(name, coveredLines.size() + partiallyCoveredLines.size(), uncoveredLines.size());
+                            final ClassCoverage report = new ClassCoverage(packageName, className, coveredLines.size() + partiallyCoveredLines.size(), uncoveredLines.size());
                             boolean inRange = false;
                             int from = 0;
                             ArrayList<Range> ranges = new ArrayList<>();
@@ -76,14 +77,15 @@ public class JacocoReport {
         try {
             Map<ClassCoverage, Set<MethodCoverage>> coveredMethods = new ConcurrentHashMap<>();
             getFileReports().parallel().forEach(reportFile -> {
-                String name = reportFile.getParentFile().getName() + "." + reportFile.getName().replace(".html", "");
+                String packageName = reportFile.getParentFile().getName();
+                String className = reportFile.getName().replace(".html", "");
                 try {
                     final Document doc = Jsoup.parse(reportFile, "UTF-8");
                     final Elements methods = doc.select("table.coverage > tbody > tr");
                     final Element total = doc.select("table.coverage > tfoot > tr").first();
                     final int linesInClass = Integer.parseInt(total.child(NUMBER_OF_LINES_COLUMN).text().replace(",", ""));
                     final int missingLinesInClass = Integer.parseInt(total.child(NUMBER_OF_MISSING_LINES_COLUMN).text().replace(",", ""));
-                    final ClassCoverage report = new ClassCoverage(name, linesInClass - missingLinesInClass, missingLinesInClass);
+                    final ClassCoverage report = new ClassCoverage(packageName, className, linesInClass - missingLinesInClass, missingLinesInClass);
                     Set<MethodCoverage> methodCoverages = new HashSet<>();
                     coveredMethods.put(report, methodCoverages);
                     for (Element method : methods) {

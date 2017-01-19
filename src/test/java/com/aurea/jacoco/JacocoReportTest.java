@@ -34,17 +34,4 @@ public class JacocoReportTest {
 
         assertThat(result.get(new ClassCoverage("com.aurea.jacoco.JacocoReportParser", 50, 17))).isNotEmpty();
     }
-
-    @Test
-    public void testActional() throws Exception {
-        Map<ClassCoverage, Set<MethodCoverage>> result =
-                JacocoReport.fromHtml(Paths.get("C:/crossover/aurea/actional/mybuild/ss/build/debug/common/tests/coverage"))
-                        .findCoveredMethods();
-        Map<String, Set<MethodCoverage>> namesAsKeys = EntryStream.of(result).mapKeys(ClassCoverage::getName).toMap();
-        EntryStream.of(namesAsKeys).forKeyValue((key, value) -> {
-            if (key.contains("DBConfigCallback")) {
-                System.out.println("Full key: " + key + " values: " + namesAsKeys.get(key));
-            }
-        });
-    }
 }
