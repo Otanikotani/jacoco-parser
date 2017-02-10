@@ -6,6 +6,7 @@ import com.aurea.jacoco.MethodCoverage;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import one.util.streamex.EntryStream;
 
 import java.util.List;
@@ -38,6 +39,7 @@ public class JacocoToJsonConverter {
 
     private ObjectMapper newMapper() {
         ObjectMapper mapper = new ObjectMapper();
+        mapper.registerModule(new JavaTimeModule());
         for (SerializationFeature feature : features) {
             mapper.enable(feature);
         }

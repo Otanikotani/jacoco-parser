@@ -1,17 +1,17 @@
 package com.aurea.jacoco.json;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import static java.util.Collections.emptyList;
-
+@JsonIgnoreProperties(ignoreUnknown = true)
 class Project {
 
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyyMMdd'T'HHmmssZ")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyyMMdd HH:mm:ss.SSSSSS 'Z'")
     private LocalDateTime created = LocalDateTime.now();
 
     private String name;
