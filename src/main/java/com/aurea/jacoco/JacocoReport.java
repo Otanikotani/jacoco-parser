@@ -13,8 +13,10 @@ import org.jsoup.select.Elements;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
@@ -27,8 +29,10 @@ public class JacocoReport {
     private static final Map<ClassCoverage, Set<MethodCoverage>> EMPTY_METHODS_RESULT = Collections.emptyMap();
     private static final int NUMBER_OF_LINES_COLUMN = 8;
     private static final int NUMBER_OF_MISSING_LINES_COLUMN = 7;
+    private static final String CHARSET = "UTF-8";
 
     private Path pathToJacocoReport;
+    private String moduleName;
 
     private final Supplier<Map<ClassCoverage, List<Range>>> rangesCache = Suppliers.memoize(() -> {
                 try {
@@ -37,7 +41,7 @@ public class JacocoReport {
                         String packageName = reportFile.getParentFile().getName();
                         String className = reportFile.getName().replace(".java.html", "");
                         try {
-                            final Document doc = Jsoup.parse(reportFile, "UTF-8");
+                            final Document doc = Jsoup.parse(reportFile, CHARSET);
                             final Elements lines = doc.select("span[id^=L]");
                             final Elements uncoveredLines = doc.select("span.nc");
                             final Elements coveredLines = doc.select("span.fc");
@@ -67,7 +71,7 @@ public class JacocoReport {
                     });
                     return coveredRanges;
                 } catch (IOException e) {
-                    logger.error("Failed to find covered ranges in Jacoco report dir: " + pathToJacocoReport, e);
+                    logger.error("Failed to find jacoco html report in dir: " + pathToJacocoReport + " returning empty result", e);
                     return EMPTY_LINES_RESULT;
                 }
             }
@@ -80,7 +84,7 @@ public class JacocoReport {
                 String packageName = reportFile.getParentFile().getName();
                 String className = reportFile.getName().replace(".html", "");
                 try {
-                    final Document doc = Jsoup.parse(reportFile, "UTF-8");
+                    final Document doc = Jsoup.parse(reportFile, CHARSET);
                     final Elements methods = doc.select("table.coverage > tbody > tr");
                     final Element total = doc.select("table.coverage > tfoot > tr").first();
                     final int linesInClass = Integer.parseInt(total.child(NUMBER_OF_LINES_COLUMN).text().replace(",", ""));
@@ -102,17 +106,26 @@ public class JacocoReport {
             });
             return coveredMethods;
         } catch (IOException e) {
-            logger.error("Failed to find covered methods in Jacoco report dir: " + pathToJacocoReport, e);
+            logger.error("Failed to find jacoco html report in dir: " + pathToJacocoReport + " returning empty result", e);
             return EMPTY_METHODS_RESULT;
         }
     });
 
-    public static JacocoReport fromHtml(Path pathToHtmlReport) {
-        return new JacocoReport(pathToHtmlReport);
-    }
-
     private JacocoReport(Path pathToJacocoReport) {
         this.pathToJacocoReport = pathToJacocoReport;
+        File indexFile = pathToJacocoReport.resolve("index.html").toFile();
+        try {
+            Document doc = Jsoup.parse(indexFile, CHARSET);
+            Element titleElement = doc.select("h4").first();
+            moduleName = titleElement.text();
+        } catch (IOException e) {
+            logger.error("Failed to find index.html report in dir", e);
+            moduleName = "Unknown";
+        }
+    }
+
+    public static JacocoReport fromHtml(Path pathToHtmlReport) {
+        return new JacocoReport(pathToHtmlReport);
     }
 
     public Map<ClassCoverage, List<Range>> findCoveredRanges() {
@@ -123,12 +136,15 @@ public class JacocoReport {
         return methodsCache.get();
     }
 
+    public String getModuleName() {
+        return moduleName;
+    }
+
     private Stream<File> getSourceReports() throws IOException {
         return mapToFilesOnly().filter(f -> f.getName().endsWith(".java.html"));
     }
 
     private Stream<File> getFileReports() throws IOException {
-
         return mapToFilesOnly().filter(f -> f.getName().endsWith(".html")
                 && !StringUtils.endsWithAny(f.getName(),
                 ".java.html",
