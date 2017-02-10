@@ -2,11 +2,15 @@ package com.aurea.jacoco.json;
 
 import com.aurea.jacoco.ClassCoverage;
 import com.aurea.jacoco.MethodCoverage;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 class Unit {
 
+    @JsonProperty("class")
     private String className;
+    @JsonProperty("package")
     private String packageName;
+    @JsonProperty("method")
     private String methodName;
     private int covered;
     private int uncovered;

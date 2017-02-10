@@ -116,7 +116,10 @@ public class JacocoReport {
         File indexFile = pathToJacocoReport.resolve("index.html").toFile();
         try {
             Document doc = Jsoup.parse(indexFile, CHARSET);
-            Element titleElement = doc.select("h4").first();
+            Element titleElement = doc.select("h1").first();
+            if (null == titleElement) {
+                titleElement = doc.select("h4").first();
+            }
             moduleName = titleElement.text();
         } catch (IOException e) {
             logger.error("Failed to find index.html report in dir", e);
