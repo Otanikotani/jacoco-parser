@@ -27,12 +27,20 @@ public class JacocoToJsonConverter {
 
     public String toJson(JacocoReport report, String projectName) throws JsonProcessingException {
         final Project project = Project.of(projectName);
-        final String moduleName = report.getModuleName();
-        Module module = Module.of(moduleName);
+        Module module = Module.of(report.getReportStats());
         project.addModule(module);
         Map<ClassCoverage, Set<MethodCoverage>> coveredMethods = report.findCoveredMethods();
         List<Unit> units = EntryStream.of(coveredMethods).flatMapValues(Set::stream).mapKeyValue(Unit::of).toList();
         module.setUnits(units);
+        ObjectMapper mapper = newMapper();
+        return mapper.writeValueAsString(project);
+    }
+
+    public String metaInformationToJson(JacocoReport report, String projectName) throws JsonProcessingException {
+        final Project project = Project.of(projectName);
+        Module module = Module.of(report.getReportStats());
+        module.setUnits(null);
+        project.addModule(module);
         ObjectMapper mapper = newMapper();
         return mapper.writeValueAsString(project);
     }

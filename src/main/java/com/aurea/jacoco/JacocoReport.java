@@ -13,11 +13,14 @@ import org.jsoup.select.Elements;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
@@ -32,7 +35,7 @@ public class JacocoReport {
     private static final String CHARSET = "UTF-8";
 
     private Path pathToJacocoReport;
-    private String moduleName;
+    private ReportStats reportStats;
 
     private final Supplier<Map<ClassCoverage, List<Range>>> rangesCache = Suppliers.memoize(() -> {
                 try {
@@ -120,10 +123,15 @@ public class JacocoReport {
             if (null == titleElement) {
                 titleElement = doc.select("h4").first();
             }
-            moduleName = titleElement.text();
+            String moduleName = titleElement.text();
+
+            final Element total = doc.select("table.coverage > tfoot > tr").first();
+            int linesInModule = Integer.parseInt(total.child(NUMBER_OF_LINES_COLUMN).text().replace(",", ""));
+            int missingLinesInModule = Integer.parseInt(total.child(NUMBER_OF_MISSING_LINES_COLUMN).text().replace(",", ""));
+            reportStats = new ReportStats(moduleName, linesInModule, missingLinesInModule);
         } catch (IOException e) {
             logger.error("Failed to find index.html report in dir", e);
-            moduleName = "Unknown";
+            reportStats = new ReportStats("Unknown", 0, 0);
         }
     }
 
@@ -139,8 +147,8 @@ public class JacocoReport {
         return methodsCache.get();
     }
 
-    public String getModuleName() {
-        return moduleName;
+    public ReportStats getReportStats() {
+        return reportStats;
     }
 
     private Stream<File> getSourceReports() throws IOException {

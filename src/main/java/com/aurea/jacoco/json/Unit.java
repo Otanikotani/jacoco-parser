@@ -14,6 +14,7 @@ class Unit {
     private String methodName;
     private int covered;
     private int uncovered;
+    private int total;
 
     public static Unit of(ClassCoverage classCoverage, MethodCoverage methodCoverage) {
         Unit unit = new Unit();
@@ -22,6 +23,7 @@ class Unit {
         unit.setMethodName(methodCoverage.getName());
         unit.setCovered(methodCoverage.getCovered());
         unit.setUncovered(methodCoverage.getUncovered());
+        unit.setTotal(methodCoverage.getUncovered() + methodCoverage.getCovered());
         return unit;
     }
 
@@ -63,5 +65,13 @@ class Unit {
 
     public void setUncovered(int uncovered) {
         this.uncovered = uncovered;
+    }
+
+    public int getTotal() {
+        return total;
+    }
+
+    public void setTotal(int total) {
+        this.total = total;
     }
 }

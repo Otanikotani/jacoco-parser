@@ -1,5 +1,6 @@
 package com.aurea.jacoco.json;
 
+import com.aurea.jacoco.ReportStats;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -12,16 +13,16 @@ import java.util.List;
 class Project {
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyyMMdd HH:mm:ss.SSSSSS 'Z'")
-    private LocalDateTime created = LocalDateTime.now();
+    private LocalDateTime timestamp = LocalDateTime.now();
 
     private String name;
 
     @JsonProperty("module")
     private List<Module> modules = new ArrayList<>();
 
-    public static Project of(String name) {
+    public static Project of(String projectName) {
         Project project = new Project();
-        project.setName(name);
+        project.setName(projectName);
         return project;
     }
 
@@ -38,12 +39,12 @@ class Project {
         this.name = name;
     }
 
-    public LocalDateTime getCreated() {
-        return created;
+    public LocalDateTime getTimestamp() {
+        return timestamp;
     }
 
-    public void setCreated(LocalDateTime created) {
-        this.created = created;
+    public void setTimestamp(LocalDateTime timestamp) {
+        this.timestamp = timestamp;
     }
 
     public List<Module> getModules() {
@@ -53,4 +54,5 @@ class Project {
     public void setModules(List<Module> modules) {
         this.modules = modules;
     }
+
 }
