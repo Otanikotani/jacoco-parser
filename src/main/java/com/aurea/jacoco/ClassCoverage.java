@@ -1,59 +1,60 @@
 package com.aurea.jacoco;
 
-public class ClassCoverage {
+import com.google.common.base.Objects;
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 
-    private final String packageName, className;
-    private final int covered;
-    private final int uncovered;
+import java.util.List;
+import java.util.stream.Stream;
 
-    public ClassCoverage(String packageName, String className, int covered, int uncovered) {
-        this.packageName = packageName;
-        this.className = className;
-        this.covered = covered;
-        this.uncovered = uncovered;
+class ClassCoverage extends Named implements CoverageUnit {
+
+    private final List<MethodCoverage> methodCoverages;
+
+    private final Supplier<Integer> covered = Suppliers
+            .memoize(() -> methodCoverages().mapToInt(MethodCoverage::getCovered).sum());
+
+    private final Supplier<Integer> uncovered = Suppliers.memoize(() ->
+        methodCoverages().mapToInt(MethodCoverage::getUncovered).sum());
+
+    private final Supplier<Integer> total = Suppliers.memoize(() ->
+        methodCoverages().mapToInt(MethodCoverage::getTotal).sum());
+
+    ClassCoverage(String name, List<MethodCoverage> methodCoverages) {
+        super(name);
+        this.methodCoverages = methodCoverages;
     }
 
-    public String getName() {
-        return packageName + "." + className;
+    public List<MethodCoverage> getMethodCoverages() {
+        return methodCoverages;
     }
 
-    public String getPackageName() {
-        return packageName;
+    public Stream<MethodCoverage> methodCoverages() {
+        return methodCoverages.stream();
     }
 
-    public String getClassName() {
-        return className;
+    public Integer getCovered() {
+        return covered.get();
     }
 
-    public int getCovered() {
-        return covered;
+    public Integer getUncovered() {
+        return uncovered.get();
     }
 
-    public int getUncovered() {
-        return uncovered;
+    public Integer getTotal() {
+        return total.get();
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-
         ClassCoverage that = (ClassCoverage) o;
-
-        if (covered != that.covered) return false;
-        if (uncovered != that.uncovered) return false;
-        if (packageName != null ? !packageName.equals(that.packageName) : that.packageName != null) return false;
-        if (className != null ? !className.equals(that.className) : that.className != null) return false;
-
-        return true;
+        return Objects.equal(getName(), that.getName()) && Objects.equal(methodCoverages, that.methodCoverages);
     }
 
     @Override
     public int hashCode() {
-        int result = packageName != null ? packageName.hashCode() : 0;
-        result = 31 * result + (className != null ? className.hashCode() : 0);
-        result = 31 * result + covered;
-        result = 31 * result + uncovered;
-        return result;
+        return Objects.hashCode(methodCoverages, getName());
     }
 }

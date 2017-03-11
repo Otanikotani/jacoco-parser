@@ -8,21 +8,21 @@ import one.util.streamex.StreamEx;
 import java.util.List;
 import java.util.stream.Stream;
 
-class PackageCoverage extends Named implements Coverage {
+class PackageCoverage extends Named implements CoverageUnit {
 
-    private final List<NewClassCoverage> classCoverages;
+    private final List<ClassCoverage> classCoverages;
 
     private final Supplier<Integer> covered = Suppliers
-            .memoize(() -> methodCoverages().mapToInt(NewMethodCoverage::getCovered).sum());
+            .memoize(() -> methodCoverages().mapToInt(MethodCoverage::getCovered).sum());
 
     private final Supplier<Integer> uncovered = Suppliers.memoize(() ->
-            methodCoverages().mapToInt(NewMethodCoverage::getUncovered).sum());
+            methodCoverages().mapToInt(MethodCoverage::getUncovered).sum());
 
     private final Supplier<Integer> total = Suppliers.memoize(() ->
-            methodCoverages().mapToInt(NewMethodCoverage::getTotal).sum());
+            methodCoverages().mapToInt(MethodCoverage::getTotal).sum());
 
 
-    PackageCoverage(String name, List<NewClassCoverage> classCoverages) {
+    PackageCoverage(String name, List<ClassCoverage> classCoverages) {
         super(name);
         this.classCoverages = classCoverages;
     }
@@ -35,16 +35,16 @@ class PackageCoverage extends Named implements Coverage {
         return packageCoverage.getName().startsWith(getName());
     }
 
-    public List<NewClassCoverage> getClassCoverages() {
+    public List<ClassCoverage> getClassCoverages() {
         return classCoverages;
     }
 
-    public Stream<NewClassCoverage> classCoverages() {
+    public Stream<ClassCoverage> classCoverages() {
         return classCoverages.stream();
     }
 
-    public Stream<NewMethodCoverage> methodCoverages() {
-        return StreamEx.of(classCoverages()).flatCollection(NewClassCoverage::getMethodCoverages);
+    public Stream<MethodCoverage> methodCoverages() {
+        return StreamEx.of(classCoverages()).flatCollection(ClassCoverage::getMethodCoverages);
     }
 
     @Override

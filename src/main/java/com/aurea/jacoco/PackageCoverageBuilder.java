@@ -7,7 +7,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 public final class PackageCoverageBuilder {
     private String name;
-    private List<NewClassCoverage> classCoverages = new ArrayList<>();
+    private List<ClassCoverage> classCoverages = new ArrayList<>();
 
     private PackageCoverageBuilder() {
     }
@@ -22,7 +22,7 @@ public final class PackageCoverageBuilder {
         return this;
     }
 
-    public PackageCoverageBuilder addClassCoverage(NewClassCoverage classCoverage) {
+    public PackageCoverageBuilder addClassCoverage(ClassCoverage classCoverage) {
         checkNotNull(classCoverage);
         this.classCoverages.add(classCoverage);
         return this;

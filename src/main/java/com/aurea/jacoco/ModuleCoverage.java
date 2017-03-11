@@ -5,21 +5,24 @@ import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import one.util.streamex.StreamEx;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
 
-class ModuleCoverage extends Named implements Coverage {
+class ModuleCoverage extends Named implements CoverageUnit {
+
+    static final ModuleCoverage EMPTY = new ModuleCoverage("Empty", Collections.emptyList());
 
     private final List<PackageCoverage> packageCoverages;
 
     private final Supplier<Integer> covered = Suppliers
-            .memoize(() -> methodCoverages().mapToInt(NewMethodCoverage::getCovered).sum());
+            .memoize(() -> methodCoverages().mapToInt(MethodCoverage::getCovered).sum());
 
     private final Supplier<Integer> uncovered = Suppliers.memoize(() ->
-            methodCoverages().mapToInt(NewMethodCoverage::getUncovered).sum());
+            methodCoverages().mapToInt(MethodCoverage::getUncovered).sum());
 
     private final Supplier<Integer> total = Suppliers.memoize(() ->
-            methodCoverages().mapToInt(NewMethodCoverage::getTotal).sum());
+            methodCoverages().mapToInt(MethodCoverage::getTotal).sum());
 
 
     ModuleCoverage(String name, List<PackageCoverage> packageCoverages) {
@@ -35,12 +38,12 @@ class ModuleCoverage extends Named implements Coverage {
         return packageCoverages.stream();
     }
 
-    public Stream<NewClassCoverage> classCoverages() {
+    public Stream<ClassCoverage> classCoverages() {
         return StreamEx.of(packageCoverages()).flatCollection(PackageCoverage::getClassCoverages);
     }
 
-    public Stream<NewMethodCoverage> methodCoverages() {
-        return StreamEx.of(classCoverages()).flatCollection(NewClassCoverage::getMethodCoverages);
+    public Stream<MethodCoverage> methodCoverages() {
+        return StreamEx.of(classCoverages()).flatCollection(ClassCoverage::getMethodCoverages);
     }
 
     @Override
