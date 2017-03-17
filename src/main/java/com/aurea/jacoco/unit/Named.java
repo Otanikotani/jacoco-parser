@@ -1,8 +1,6 @@
-package com.aurea.jacoco;
+package com.aurea.jacoco.unit;
 
-import com.google.common.base.MoreObjects;
-
-abstract class Named {
+public abstract class Named {
 
     private final String name;
 
@@ -16,8 +14,8 @@ abstract class Named {
 
     @Override
     public String toString() {
-        return MoreObjects.toStringHelper(this)
-                .add("name", name)
-                .toString();
+        return "Named{" +
+                "name='" + name + '\'' +
+                '}';
     }
 }

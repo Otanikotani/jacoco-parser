@@ -1,5 +1,10 @@
 package com.aurea.jacoco;
 
+import com.aurea.jacoco.unit.ClassCoverage;
+import com.aurea.jacoco.unit.MethodCoverage;
+import com.aurea.jacoco.unit.ModuleCoverage;
+import com.aurea.jacoco.unit.Named;
+import com.aurea.jacoco.unit.PackageCoverage;
 import org.junit.Test;
 
 import java.net.URL;

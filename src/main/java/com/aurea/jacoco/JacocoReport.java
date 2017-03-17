@@ -1,10 +1,9 @@
 package com.aurea.jacoco;
 
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import com.aurea.jacoco.unit.ClassCoverage;
+import com.aurea.jacoco.unit.MethodCoverage;
+import com.aurea.jacoco.unit.ModuleCoverage;
+import com.aurea.jacoco.unit.PackageCoverage;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -14,56 +13,27 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
 public class JacocoReport {
 
-    private static final Logger logger = LogManager.getLogger(JacocoReport.class.getSimpleName());
-
     private static final int NUMBER_OF_LINES_COLUMN = 8;
     private static final int NUMBER_OF_MISSING_LINES_COLUMN = 7;
     private static final String CHARSET = "UTF-8";
+    private static final List<String> FILE_REPORT_FILES = Arrays.asList(
+            ".java.html",
+            "index.html",
+            "index.source.html",
+            ".sessions.html",
+            "jacoco-sessions.html");
 
-    private Path pathToJacocoReport;
-    private ReportStats reportStats;
-
-    private final Supplier<ModuleCoverage> methodsCache = Suppliers.memoize(() -> {
-        try {
-            ModuleCoverageBuilder moduleBuilder = ModuleCoverageBuilder.aModuleCoverage().withName(reportStats.getModuleName());
-            Map<String, PackageCoverageBuilder> packageBuilders = new HashMap<>();
-            getFileReports().parallel().forEach(reportFile -> {
-                final String packageName = reportFile.getParentFile().getName();
-                final String className = reportFile.getName().replace(".html", "");
-                PackageCoverageBuilder packageBuilder = packageBuilders.computeIfAbsent(packageName,
-                        (name) -> PackageCoverageBuilder.aPackageCoverage().withName(name));
-                ClassCoverageBuilder classBuilder = ClassCoverageBuilder.aNewClassCoverage().withName(className);
-                try {
-                    final Document doc = Jsoup.parse(reportFile, CHARSET);
-                    final Elements methods = doc.select("table.coverage > tbody > tr");
-                    for (Element method : methods) {
-                        int linesInMethod = Integer.parseInt(method.child(NUMBER_OF_LINES_COLUMN).text().replace(",", ""));
-                        int missingLinesInMethod = Integer.parseInt(method.child(NUMBER_OF_MISSING_LINES_COLUMN).text().replace(",", ""));
-                        String methodName = method.child(0).child(0).text();
-                        if (!methodName.contains("{")) {
-                            classBuilder.addMethodCoverage(
-                                    new MethodCoverage(methodName, 0, 0, linesInMethod - missingLinesInMethod, missingLinesInMethod)
-                            );
-                        }
-                    }
-                    packageBuilder.addClassCoverage(classBuilder.build());
-                } catch (Exception e) {
-                    logger.error("Failed to parse file: " + reportFile.getName(), e);
-                }
-            });
-            packageBuilders.values().forEach(p -> moduleBuilder.addPackageCoverage(p.build()));
-            return moduleBuilder.build();
-        } catch (IOException e) {
-            logger.error("Failed to find jacoco html report in dir: " + pathToJacocoReport + " returning empty result", e);
-            return ModuleCoverage.EMPTY;
-        }
-    });
+    private final Path pathToJacocoReport;
+    private final ReportStats reportStats;
 
     private JacocoReport(Path pathToJacocoReport) {
         this.pathToJacocoReport = pathToJacocoReport;
@@ -81,8 +51,7 @@ public class JacocoReport {
             int missingLinesInModule = Integer.parseInt(total.child(NUMBER_OF_MISSING_LINES_COLUMN).text().replace(",", ""));
             reportStats = new ReportStats(moduleName, linesInModule, missingLinesInModule);
         } catch (IOException e) {
-            logger.error("Failed to find index.html report in dir", e);
-            reportStats = new ReportStats("Unknown", 0, 0);
+            throw new JacocoParserException("Failed to find index.html report in " + pathToJacocoReport, e);
         }
     }
 
@@ -91,7 +60,40 @@ public class JacocoReport {
     }
 
     public ModuleCoverage getModuleCoverage() {
-        return methodsCache.get();
+        try {
+            Map<String, List<ClassCoverage>> classCoveragesPerPackage = new HashMap<>();
+            getFileReports().parallel().forEach(reportFile -> {
+                final String packageName = reportFile.getParentFile().getName();
+                final String className = reportFile.getName().replace(".html", "");
+                List<ClassCoverage> classCoverages = classCoveragesPerPackage.computeIfAbsent(packageName,
+                        (name) -> new ArrayList<>());
+                List<MethodCoverage> methodCoverages = new ArrayList<>();
+
+                try {
+                    final Document doc = Jsoup.parse(reportFile, CHARSET);
+                    final Elements methods = doc.select("table.coverage > tbody > tr");
+                    for (Element method : methods) {
+                        int linesInMethod = Integer.parseInt(method.child(NUMBER_OF_LINES_COLUMN).text().replace(",", ""));
+                        int missingLinesInMethod = Integer.parseInt(method.child(NUMBER_OF_MISSING_LINES_COLUMN).text().replace(",", ""));
+                        String methodName = method.child(0).child(0).text();
+                        if (!methodName.contains("{")) {
+                            methodCoverages.add(
+                                    new MethodCoverage(methodName, 0, 0, linesInMethod - missingLinesInMethod, missingLinesInMethod)
+                            );
+                        }
+                    }
+                    classCoverages.add(new ClassCoverage(className, methodCoverages));
+                } catch (Exception e) {
+                    throw new JacocoParserException("Failed to parse file " + reportFile.getName(), e);
+                }
+            });
+            List<PackageCoverage> packageCoverages = new ArrayList<>();
+
+            classCoveragesPerPackage.entrySet().forEach((entry) -> packageCoverages.add(new PackageCoverage(entry.getKey(), entry.getValue())));
+            return new ModuleCoverage(reportStats.getModuleName(), packageCoverages);
+        } catch (IOException e) {
+            throw new JacocoParserException("Failed to find index.html report in " + pathToJacocoReport, e);
+        }
     }
 
     public ReportStats getReportStats() {
@@ -104,12 +106,7 @@ public class JacocoReport {
 
     private Stream<File> getFileReports() throws IOException {
         return mapToFilesOnly().filter(f -> f.getName().endsWith(".html")
-                && !StringUtils.endsWithAny(f.getName(),
-                ".java.html",
-                "index.html",
-                "index.source.html",
-                ".sessions.html",
-                "jacoco-sessions.html"));
+                && FILE_REPORT_FILES.stream().noneMatch(suffix -> f.getName().endsWith(suffix)));
     }
 
     private Stream<File> mapToFilesOnly() throws IOException {

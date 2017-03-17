@@ -1,16 +1,15 @@
-package com.aurea.jacoco;
+package com.aurea.jacoco.unit;
 
-import com.google.common.base.MoreObjects;
-import com.google.common.base.Objects;
+import java.util.Objects;
 
-class MethodCoverage extends Named {
+public class MethodCoverage extends Named implements CoverageUnit {
 
     private final int instructionCovered;
     private final int instructionUncovered;
     private final int covered;
     private final int uncovered;
 
-    protected MethodCoverage(String name, int instructionCovered, int instructionUncovered, int covered, int uncovered) {
+    public MethodCoverage(String name, int instructionCovered, int instructionUncovered, int covered, int uncovered) {
         super(name);
         this.instructionCovered = instructionCovered;
         this.instructionUncovered = instructionUncovered;
@@ -26,14 +25,17 @@ class MethodCoverage extends Named {
         return instructionUncovered;
     }
 
+    @Override
     public int getCovered() {
         return covered;
     }
 
+    @Override
     public int getUncovered() {
         return uncovered;
     }
 
+    @Override
     public int getTotal() {
         return covered + uncovered;
     }
@@ -47,8 +49,7 @@ class MethodCoverage extends Named {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         MethodCoverage that = (MethodCoverage) o;
-        return
-                getName().equals(that.getName()) &&
+        return Objects.equals(getName(), that.getName()) &&
                 instructionCovered == that.instructionCovered &&
                 instructionUncovered == that.instructionUncovered &&
                 covered == that.covered &&
@@ -57,17 +58,6 @@ class MethodCoverage extends Named {
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(instructionCovered, instructionUncovered, covered, uncovered, getName());
-    }
-
-    @Override
-    public String toString() {
-        return MoreObjects.toStringHelper(this)
-                .add("name", getName())
-                .add("instructionCovered", instructionCovered)
-                .add("instructionUncovered", instructionUncovered)
-                .add("covered", covered)
-                .add("uncovered", uncovered)
-                .toString();
+        return Objects.hash(instructionCovered, instructionUncovered, covered, uncovered, getName());
     }
 }
