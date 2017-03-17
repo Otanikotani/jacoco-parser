@@ -60,4 +60,15 @@ public class MethodCoverage extends Named implements CoverageUnit {
     public int hashCode() {
         return Objects.hash(instructionCovered, instructionUncovered, covered, uncovered, getName());
     }
+
+    @Override
+    public String toString() {
+        return "MethodCoverage{" +
+                "name=" + getName() +
+                ", instructionCovered=" + instructionCovered +
+                ", instructionUncovered=" + instructionUncovered +
+                ", covered=" + covered +
+                ", uncovered=" + uncovered +
+                '}';
+    }
 }
