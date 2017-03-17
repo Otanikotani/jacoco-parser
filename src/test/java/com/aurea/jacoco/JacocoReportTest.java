@@ -5,7 +5,6 @@ import org.junit.Test;
 import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -20,7 +19,6 @@ public class JacocoReportTest {
         URL jacoco = getClass().getResource("report");
         Path path = Paths.get(jacoco.toURI());
         ModuleCoverage moduleCoverage = JacocoReport.fromHtml(path).getModuleCoverage();
-
 
         assertPackages(moduleCoverage.packageCoverages());
         assertClasses(moduleCoverage.classCoverages());
