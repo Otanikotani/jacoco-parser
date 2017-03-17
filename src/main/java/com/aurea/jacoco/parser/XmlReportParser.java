@@ -1,7 +1,6 @@
 package com.aurea.jacoco.parser;
 
 import com.aurea.jacoco.JacocoIndex;
-import com.aurea.jacoco.ReportStats;
 import com.aurea.jacoco.unit.ClassCoverage;
 import com.aurea.jacoco.unit.CoverageUnit;
 import com.aurea.jacoco.unit.MethodCoverage;
@@ -60,7 +59,7 @@ public class XmlReportParser implements JacocoParser {
         } catch (FileNotFoundException | XMLStreamException e) {
             throw new JacocoParserException("Failed to parse " + pathToXml, e);
         }
-        return new JacocoIndex(moduleCoverage, new ReportStats("", 0, 0));
+        return new JacocoIndex(moduleCoverage);
     }
 
     private ModuleCoverage parseModule(StartElement moduleElement) {

@@ -5,21 +5,28 @@ import com.aurea.jacoco.unit.ClassCoverage;
 import com.aurea.jacoco.unit.MethodCoverage;
 import com.aurea.jacoco.unit.Named;
 import com.aurea.jacoco.unit.PackageCoverage;
+import org.junit.Assert;
 import org.junit.Test;
 
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertEquals;
 
-public class XmlReportParserTest extends ParserTest {
+public class XmlReportParserTest {
 
     @Test
     public void shouldFindJacocoXmlWhenGivenPathToDirectory() throws Exception {
-        Path path = getPathToTestReport();
+        URL jacoco = getClass().getResource("../report");
+        Path path = Paths.get(jacoco.toURI());
 
         JacocoIndex jacocoIndex = JacocoParsers.fromXml(path);
 
