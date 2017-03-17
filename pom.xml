@@ -164,19 +164,6 @@
                     </execution>
                 </executions>
             </plugin>
-            <plugin>
-                <groupId>com.aurea.coverage</groupId>
-                <artifactId>coveragedraw-maven-plugin</artifactId>
-                <version>1.0-SNAPSHOT</version>
-                <executions>
-                    <execution>
-                        <phase>prepare-package</phase>
-                        <goals>
-                            <goal>generate-chart</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
         </plugins>
 
         <resources>
