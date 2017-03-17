@@ -2,7 +2,7 @@ package com.aurea.jacoco.unit;
 
 import java.util.Objects;
 
-public class MethodCoverage extends Named implements CoverageUnit {
+public final class MethodCoverage extends Named implements CoverageUnit {
 
     private final int instructionCovered;
     private final int instructionUncovered;

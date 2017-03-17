@@ -6,6 +6,7 @@ import com.aurea.jacoco.unit.CoverageUnit;
 import com.aurea.jacoco.unit.MethodCoverage;
 import com.aurea.jacoco.unit.ModuleCoverage;
 import com.aurea.jacoco.unit.PackageCoverage;
+import org.jacoco.report.JavaNames;
 
 import javax.xml.namespace.QName;
 import javax.xml.stream.XMLEventReader;
@@ -14,28 +15,40 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.events.EndElement;
 import javax.xml.stream.events.StartElement;
 import javax.xml.stream.events.XMLEvent;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Function;
 
 public class XmlReportParser implements JacocoParser {
 
     public static final String JACOCO_XML_FILE_NAME = "jacoco.xml";
 
+    static final String NULL_PATH_ERROR = "Path to Jacoco xml should not be null";
+    static final String INVALID_PATH_ERROR = "jacoco.xml has not been found in %s";
+    static final String PARSE_ERROR = "Failed to parse %s";
+
     private static final QName MISSED = new QName("missed");
     private static final QName NAME = new QName("name");
+    private static final QName DESC = new QName("desc");
     private static final QName COVERED = new QName("covered");
 
-    private final Path pathToXml;
     private XMLEventReader xmlEventReader;
+    private final JavaNames javaNames;
+    private final File jacocoFile;
 
-    public XmlReportParser(Path pathToXml) {
-        this.pathToXml = pathToXml.endsWith(JACOCO_XML_FILE_NAME) ?
-                pathToXml :
-                pathToXml.resolve(JACOCO_XML_FILE_NAME);
+    public XmlReportParser(Path path) {
+        Objects.requireNonNull(path, NULL_PATH_ERROR);
+        jacocoFile = (Files.isDirectory(path) ? path.resolve(JACOCO_XML_FILE_NAME) : path).toFile();
+        if (!jacocoFile.exists()) {
+            throw new JacocoParserException(INVALID_PATH_ERROR, path);
+        }
+        javaNames = new JavaNames();
     }
 
     @Override
@@ -43,7 +56,7 @@ public class XmlReportParser implements JacocoParser {
         ModuleCoverage moduleCoverage = null;
         XMLInputFactory xmlInputFactory = XMLInputFactory.newInstance();
         try {
-            xmlEventReader = xmlInputFactory.createXMLEventReader(new FileInputStream(pathToXml.toFile()));
+            xmlEventReader = xmlInputFactory.createXMLEventReader(new FileInputStream(jacocoFile));
             while (xmlEventReader.hasNext()) {
                 XMLEvent xmlEvent = xmlEventReader.nextEvent();
                 if (xmlEvent.isStartElement()) {
@@ -52,12 +65,11 @@ public class XmlReportParser implements JacocoParser {
                         moduleCoverage = parseModule(startElement);
                     }
                 }
-                if (isEndOf(xmlEvent, "report")) {
-                    break;
-                }
             }
-        } catch (FileNotFoundException | XMLStreamException e) {
-            throw new JacocoParserException("Failed to parse " + pathToXml, e);
+        } catch (FileNotFoundException e)  {
+            throw new JacocoParserException(INVALID_PATH_ERROR, e, jacocoFile.toPath());
+        } catch (XMLStreamException e)  {
+            throw new JacocoParserException(PARSE_ERROR, e, jacocoFile.toPath());
         }
         return new JacocoIndex(moduleCoverage);
     }
@@ -75,13 +87,16 @@ public class XmlReportParser implements JacocoParser {
     }
 
     private ClassCoverage parseClass(StartElement classElement) {
-        String name = getSimpleName(classElement);
-        List<MethodCoverage> methodCoverages = parse("class", "method", this::parseMethod);
+        String className = getName(classElement);
+        String name = className.substring(className.lastIndexOf('/') + 1);
+        List<MethodCoverage> methodCoverages = parse("class", "method", (element) -> parseMethod(element, className));
         return new ClassCoverage(name, methodCoverages);
     }
 
-    private MethodCoverage parseMethod(StartElement methodElement) {
-        String name = getName(methodElement);
+    private MethodCoverage parseMethod(StartElement methodElement, String className) {
+        String name = getName(methodElement).replace("&lt;", "<").replace("&gt;", ">");
+        String desc = methodElement.getAttributeByName(DESC).getValue();
+        String methodName = javaNames.getMethodName(className, name, desc, null);
         int missedInstructions = 0;
         int coveredInstructions = 0;
         int missedLocs = 0;
@@ -107,10 +122,10 @@ public class XmlReportParser implements JacocoParser {
                     break;
                 }
             } catch (XMLStreamException e) {
-                throw new JacocoParserException("Failed to parse method " + getName(methodElement), e);
+                throw new JacocoParserException(PARSE_ERROR, e, "counter of " + getName(methodElement));
             }
         }
-        return new MethodCoverage(name, coveredInstructions, missedInstructions, coveredLocs, missedLocs);
+        return new MethodCoverage(methodName, coveredInstructions, missedInstructions, coveredLocs, missedLocs);
     }
 
     private <T extends CoverageUnit> List<T> parse(String unitType, String subUnitType, Function<StartElement, T> subUnitParser) {
@@ -128,7 +143,7 @@ public class XmlReportParser implements JacocoParser {
                     break;
                 }
             } catch (XMLStreamException e) {
-                throw new JacocoParserException("Failed to parse " + unitType + " -> " + subUnitType, e);
+                throw new JacocoParserException(PARSE_ERROR, e, unitType);
             }
         }
         return subUnits;
@@ -136,11 +151,6 @@ public class XmlReportParser implements JacocoParser {
 
     private String getName(StartElement element) {
         return element.getAttributeByName(NAME).getValue();
-    }
-
-    private String getSimpleName(StartElement element) {
-        String name = getName(element);
-        return name.substring(name.lastIndexOf('/') + 1);
     }
 
     private boolean isStartOf(StartElement element, String name) {

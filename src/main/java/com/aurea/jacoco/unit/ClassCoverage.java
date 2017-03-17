@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
 
-public class ClassCoverage extends MethodContainerUnit {
+public final class ClassCoverage extends MethodContainerUnit {
 
     private final List<MethodCoverage> methodCoverages;
 
