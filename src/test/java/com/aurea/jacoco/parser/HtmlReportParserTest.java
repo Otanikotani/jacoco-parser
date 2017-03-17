@@ -1,6 +1,5 @@
-package com.aurea.jacoco;
+package com.aurea.jacoco.parser;
 
-import com.aurea.jacoco.parser.JacocoParsers;
 import com.aurea.jacoco.unit.ClassCoverage;
 import com.aurea.jacoco.unit.MethodCoverage;
 import com.aurea.jacoco.unit.ModuleCoverage;
@@ -8,9 +7,7 @@ import com.aurea.jacoco.unit.Named;
 import com.aurea.jacoco.unit.PackageCoverage;
 import org.junit.Test;
 
-import java.net.URL;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Comparator;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -18,12 +15,11 @@ import java.util.stream.Stream;
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class JacocoReportTest {
+public class HtmlReportParserTest extends ParserTest {
 
     @Test
     public void testFindCoveredMethods() throws Exception {
-        URL jacoco = getClass().getResource("report");
-        Path path = Paths.get(jacoco.toURI());
+        Path path = getPathToTestReport();
         ModuleCoverage moduleCoverage = JacocoParsers.fromHtml(path).getModuleCoverage();
 
         assertPackages(moduleCoverage.packageCoverages());
