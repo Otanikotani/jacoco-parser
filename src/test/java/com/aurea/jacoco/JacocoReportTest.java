@@ -1,5 +1,6 @@
 package com.aurea.jacoco;
 
+import com.aurea.jacoco.parser.JacocoParsers;
 import com.aurea.jacoco.unit.ClassCoverage;
 import com.aurea.jacoco.unit.MethodCoverage;
 import com.aurea.jacoco.unit.ModuleCoverage;
@@ -23,7 +24,7 @@ public class JacocoReportTest {
     public void testFindCoveredMethods() throws Exception {
         URL jacoco = getClass().getResource("report");
         Path path = Paths.get(jacoco.toURI());
-        ModuleCoverage moduleCoverage = JacocoReport.fromHtml(path).getModuleCoverage();
+        ModuleCoverage moduleCoverage = JacocoParsers.fromHtml(path).getModuleCoverage();
 
         assertPackages(moduleCoverage.packageCoverages());
         assertClasses(moduleCoverage.classCoverages());

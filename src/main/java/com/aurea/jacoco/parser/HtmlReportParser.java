@@ -1,5 +1,7 @@
-package com.aurea.jacoco;
+package com.aurea.jacoco.parser;
 
+import com.aurea.jacoco.JacocoIndex;
+import com.aurea.jacoco.ReportStats;
 import com.aurea.jacoco.unit.ClassCoverage;
 import com.aurea.jacoco.unit.MethodCoverage;
 import com.aurea.jacoco.unit.ModuleCoverage;
@@ -20,7 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
-public class JacocoReport {
+class HtmlReportParser implements JacocoParser {
 
     private static final int NUMBER_OF_LINES_COLUMN = 8;
     private static final int NUMBER_OF_MISSING_LINES_COLUMN = 7;
@@ -35,7 +37,7 @@ public class JacocoReport {
     private final Path pathToJacocoReport;
     private final ReportStats reportStats;
 
-    private JacocoReport(Path pathToJacocoReport) {
+    HtmlReportParser(Path pathToJacocoReport) {
         this.pathToJacocoReport = pathToJacocoReport;
         File indexFile = pathToJacocoReport.resolve("index.html").toFile();
         try {
@@ -55,11 +57,12 @@ public class JacocoReport {
         }
     }
 
-    public static JacocoReport fromHtml(Path pathToHtmlReport) {
-        return new JacocoReport(pathToHtmlReport);
+    @Override
+    public JacocoIndex buildIndex() {
+        return new JacocoIndex(parse(), reportStats);
     }
 
-    public ModuleCoverage getModuleCoverage() {
+    private ModuleCoverage parse() {
         try {
             Map<String, List<ClassCoverage>> classCoveragesPerPackage = new HashMap<>();
             getFileReports().parallel().forEach(reportFile -> {
@@ -96,14 +99,6 @@ public class JacocoReport {
         }
     }
 
-    public ReportStats getReportStats() {
-        return reportStats;
-    }
-
-    private Stream<File> getSourceReports() throws IOException {
-        return mapToFilesOnly().filter(f -> f.getName().endsWith(".java.html"));
-    }
-
     private Stream<File> getFileReports() throws IOException {
         return mapToFilesOnly().filter(f -> f.getName().endsWith(".html")
                 && FILE_REPORT_FILES.stream().noneMatch(suffix -> f.getName().endsWith(suffix)));
@@ -111,13 +106,5 @@ public class JacocoReport {
 
     private Stream<File> mapToFilesOnly() throws IOException {
         return Files.walk(pathToJacocoReport).map(Path::toFile).filter(f -> !f.isDirectory());
-    }
-
-    private boolean isPartiallyCovered(Element line) {
-        return line.hasClass("pc");
-    }
-
-    private boolean isFullyCovered(Element line) {
-        return line.hasClass("fc");
     }
 }
