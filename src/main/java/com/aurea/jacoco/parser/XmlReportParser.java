@@ -18,6 +18,7 @@ import javax.xml.stream.events.XMLEvent;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -32,6 +33,7 @@ public class XmlReportParser implements JacocoParser {
     static final String NULL_PATH_ERROR = "Path to Jacoco xml should not be null";
     static final String INVALID_PATH_ERROR = "jacoco.xml has not been found in %s";
     static final String PARSE_ERROR = "Failed to parse %s";
+    static final String IO_ERROR = "Failed to close %s";
 
     private static final QName MISSED = new QName("missed");
     private static final QName NAME = new QName("name");
@@ -55,8 +57,8 @@ public class XmlReportParser implements JacocoParser {
     public JacocoIndex buildIndex() {
         ModuleCoverage moduleCoverage = null;
         XMLInputFactory xmlInputFactory = XMLInputFactory.newInstance();
-        try {
-            xmlEventReader = xmlInputFactory.createXMLEventReader(new FileInputStream(jacocoFile));
+        try (FileInputStream fis = new FileInputStream(jacocoFile)) {
+            xmlEventReader = xmlInputFactory.createXMLEventReader(fis);
             while (xmlEventReader.hasNext()) {
                 XMLEvent xmlEvent = xmlEventReader.nextEvent();
                 if (xmlEvent.isStartElement()) {
@@ -70,6 +72,10 @@ public class XmlReportParser implements JacocoParser {
             throw new JacocoParserException(INVALID_PATH_ERROR, e, jacocoFile.toPath());
         } catch (XMLStreamException e) {
             throw new JacocoParserException(PARSE_ERROR, e, jacocoFile.toPath());
+        } catch (IOException e) {
+            throw new JacocoParserException(IO_ERROR, e, jacocoFile);
+        } finally {
+            closeReader();
         }
         return new JacocoIndex(moduleCoverage);
     }
@@ -163,5 +169,15 @@ public class XmlReportParser implements JacocoParser {
             return endElement.getName().getLocalPart().equals(name);
         }
         return false;
+    }
+
+    private void closeReader() {
+        if (null != xmlEventReader) {
+            try {
+                xmlEventReader.close();
+            } catch (XMLStreamException e) {
+                throw new JacocoParserException("Failed to close reader for %s", e, jacocoFile);
+            }
+        }
     }
 }
