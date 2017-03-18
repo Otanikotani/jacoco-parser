@@ -11,8 +11,23 @@
     <description>Parses Jacoco reports</description>
     <url>https://github.com/Otanikotani/jacoco-parser</url>
 
+    <licenses>
+        <license>
+            <name>MIT License</name>
+            <url>http://www.opensource.org/licenses/mit-license.php</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <name>Andrey Artyukhov</name>
+            <email>otanikotani@gmail.com</email>
+        </developer>
+    </developers>
+
     <properties>
-        <encoding>UTF-8</encoding>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
     <dependencies>
@@ -100,6 +115,11 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <groupId>org.eluder.coveralls</groupId>
+                <artifactId>coveralls-maven-plugin</artifactId>
+                <version>4.0.0</version>
+            </plugin>
         </plugins>
 
         <resources>
@@ -115,4 +135,10 @@
             </testResource>
         </testResources>
     </build>
+
+    <scm>
+        <connection>scm:git:https://github.com/Otanikotani/jacoco-parser.git</connection>
+        <developerConnection>scm:git:https://github.com/Otanikotani/jacoco-parser.git</developerConnection>
+        <url>https://github.com/Otanikotani/jacoco-parser.git</url>
+    </scm>
 </project>
