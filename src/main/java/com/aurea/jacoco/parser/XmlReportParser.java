@@ -66,9 +66,9 @@ public class XmlReportParser implements JacocoParser {
                     }
                 }
             }
-        } catch (FileNotFoundException e)  {
+        } catch (FileNotFoundException e) {
             throw new JacocoParserException(INVALID_PATH_ERROR, e, jacocoFile.toPath());
-        } catch (XMLStreamException e)  {
+        } catch (XMLStreamException e) {
             throw new JacocoParserException(PARSE_ERROR, e, jacocoFile.toPath());
         }
         return new JacocoIndex(moduleCoverage);

@@ -4,6 +4,8 @@ import java.util.Objects;
 
 public final class MethodCoverage extends Named implements CoverageUnit {
 
+    private static final MethodCoverage EMPTY = new MethodCoverage("", 0, 0, 0, 0);
+
     private final int instructionCovered;
     private final int instructionUncovered;
     private final int covered;
