@@ -8,7 +8,7 @@ import java.util.stream.Stream;
 
 public final class PackageCoverage extends MethodContainerUnit {
 
-    private static final PackageCoverage EMPTY = new PackageCoverage("", Collections.emptyList());
+    public static final PackageCoverage EMPTY = new PackageCoverage("", Collections.emptyList());
 
     private final List<ClassCoverage> classCoverages;
 

@@ -1,10 +1,13 @@
 package com.aurea.jacoco.unit;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
 
 public final class ModuleCoverage extends MethodContainerUnit {
+
+    public static final ModuleCoverage EMPTY = new ModuleCoverage("", Collections.emptyList());
 
     private final List<PackageCoverage> packageCoverages;
 

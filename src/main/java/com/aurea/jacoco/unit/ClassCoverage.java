@@ -7,7 +7,7 @@ import java.util.stream.Stream;
 
 public final class ClassCoverage extends MethodContainerUnit {
 
-    private static final ClassCoverage EMPTY = new ClassCoverage("", Collections.emptyList());
+    public static final ClassCoverage EMPTY = new ClassCoverage("", Collections.emptyList());
 
     private final List<MethodCoverage> methodCoverages;
 
