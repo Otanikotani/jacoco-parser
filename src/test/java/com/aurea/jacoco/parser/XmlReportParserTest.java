@@ -12,6 +12,8 @@ import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -56,7 +58,7 @@ public class XmlReportParserTest {
         expectedException.expect(NullPointerException.class);
         expectedException.expectMessage(NULL_PATH_ERROR);
 
-        JacocoParsers.fromXml(null);
+        JacocoParsers.fromXml((Path)null);
     }
 
     @Test
@@ -121,6 +123,16 @@ public class XmlReportParserTest {
     @Test
     public void shouldFindJacocoXmlWhenGivenPathToDirectory() {
         JacocoIndex jacocoIndex = JacocoParsers.fromXml(JACOCO_EXAMPLES);
+
+        assertPackages(jacocoIndex.getModuleCoverage().packageCoverages());
+        assertClasses(jacocoIndex.getModuleCoverage().classCoverages());
+        assertMethods(jacocoIndex.getModuleCoverage().methodCoverages());
+    }
+
+    @Test
+    public void shouldFindJacocoXmlWhenGivenInputStream() throws FileNotFoundException {
+        FileInputStream fileInputStream = new FileInputStream(JACOCO_EXAMPLES.resolve("jacoco.xml").toFile());
+        JacocoIndex jacocoIndex = JacocoParsers.fromXml(fileInputStream);
 
         assertPackages(jacocoIndex.getModuleCoverage().packageCoverages());
         assertClasses(jacocoIndex.getModuleCoverage().classCoverages());
