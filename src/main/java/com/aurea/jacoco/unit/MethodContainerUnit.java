@@ -2,7 +2,7 @@ package com.aurea.jacoco.unit;
 
 import java.util.stream.Stream;
 
-abstract class MethodContainerUnit extends Named implements CoverageUnit {
+public abstract class MethodContainerUnit extends Named implements CoverageUnit {
 
     protected MethodContainerUnit(String name) {
         super(name);
