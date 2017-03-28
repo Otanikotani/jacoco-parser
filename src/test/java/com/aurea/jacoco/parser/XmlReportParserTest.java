@@ -173,7 +173,7 @@ public class XmlReportParserTest {
 
     @Test
     public void readZipArchiveFindsTheJacocoXmlReport() throws FileNotFoundException {
-        JacocoIndex jacocoIndex = JacocoParsers.fromArchive(new FileInputStream("D:/crossover/repos/jacoco-parser/jacoco.zip"));
+        JacocoIndex jacocoIndex = JacocoParsers.fromArchive(new FileInputStream(JACOCO_EXAMPLES.resolve("jacoco.zip").toFile()));
         ModuleCoverage moduleCoverage = jacocoIndex.getModuleCoverage();
 
         assertThat(moduleCoverage.getName()).isEqualTo("jtobDataAccess");
