@@ -15,6 +15,10 @@ public class JacocoIndex {
         moduleCoverages.add(moduleCoverage);
     }
 
+    public JacocoIndex(List<ModuleCoverage> moduleCoverages) {
+        this.moduleCoverages = moduleCoverages;
+    }
+
     public List<ModuleCoverage> getModuleCoverages() {
         return moduleCoverages;
     }
