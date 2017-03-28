@@ -171,6 +171,14 @@ public class XmlReportParserTest {
         assertThat(moduleCoverage.getTotal()).isEqualTo(sumOfMethods);
     }
 
+    @Test
+    public void readZipArchiveFindsTheJacocoXmlReport() throws FileNotFoundException {
+        JacocoIndex jacocoIndex = JacocoParsers.fromArchive(new FileInputStream("D:/crossover/repos/jacoco-parser/jacoco.zip"));
+        ModuleCoverage moduleCoverage = jacocoIndex.getModuleCoverage();
+
+        assertThat(moduleCoverage.getName()).isEqualTo("jtobDataAccess");
+    }
+
     private void assertMethods(Stream<MethodCoverage> methodCoverages) {
         assertThat(methodCoverages.collect(Collectors.toList()))
                 .containsExactly(

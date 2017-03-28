@@ -17,4 +17,8 @@ public final class JacocoParsers {
         return new XmlReportParser(jacocoFileInputStream).buildIndex();
     }
 
+    public static JacocoIndex fromArchive(InputStream archiveInputStream) {
+        return new ArchiveReportParser(archiveInputStream).buildIndex();
+    }
+
 }
