@@ -14,9 +14,4 @@ public final class IdeaParsers {
     public static CoverageIndex fromHtml(Path pathToHtmlReport) {
         return new HtmlReportParser(pathToHtmlReport).buildIndex();
     }
-
-    public static CoverageIndex fromArchive(InputStream archiveInputStream) {
-        return new ArchiveHtmlReportParser(archiveInputStream).buildIndex();
-    }
-
 }
