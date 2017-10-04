@@ -5,9 +5,11 @@ import com.aurea.coverage.SampleFolder;
 import com.aurea.coverage.parser.CoverageParserException;
 import com.aurea.coverage.parser.JacocoParsers;
 import com.aurea.coverage.unit.ClassCoverage;
+import com.aurea.coverage.unit.ClassCoverageImpl;
 import com.aurea.coverage.unit.MethodCoverage;
 import com.aurea.coverage.unit.ModuleCoverage;
 import com.aurea.coverage.unit.Named;
+import com.aurea.coverage.unit.NamedImpl;
 import com.aurea.coverage.unit.PackageCoverage;
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -137,7 +139,7 @@ public class XmlReportParserTest {
     @Test
     public void totalOfClassShouldBeEqualToSumOfItsMethods() {
         CoverageIndex coverageIndex = JacocoParsers.fromXml(SAMPLES.resolve("sample"));
-        ClassCoverage classCoverage = coverageIndex.getModuleCoverage().classCoverages().findFirst().orElseThrow(FAIL);
+        ClassCoverageImpl classCoverage = (ClassCoverageImpl)coverageIndex.getModuleCoverage().classCoverages().findFirst().orElseThrow(FAIL);
         int sumOfMethods = classCoverage.getMethodCoverages().stream().mapToInt(MethodCoverage::getTotal).sum();
 
         assertThat(classCoverage.getTotal()).isEqualTo(sumOfMethods);
@@ -235,18 +237,18 @@ public class XmlReportParserTest {
         assertThat(classCoverages.collect(Collectors.toList()))
                 .usingElementComparator(Comparator.comparing(Named::getName))
                 .containsOnly(
-                        new ClassCoverage("Duplicate", emptyList()),
-                        new ClassCoverage("JacocoReportParser", emptyList()),
-                        new ClassCoverage("JacocoReport", emptyList()),
-                        new ClassCoverage("Main", emptyList()),
-                        new ClassCoverage("Main$1", emptyList()),
-                        new ClassCoverage("SettersGettersLocFinder", emptyList())
+                        new ClassCoverageImpl("Duplicate", emptyList()),
+                        new ClassCoverageImpl("JacocoReportParser", emptyList()),
+                        new ClassCoverageImpl("JacocoReport", emptyList()),
+                        new ClassCoverageImpl("Main", emptyList()),
+                        new ClassCoverageImpl("Main$1", emptyList()),
+                        new ClassCoverageImpl("SettersGettersLocFinder", emptyList())
                 );
     }
 
     private void assertPackages(Stream<PackageCoverage> packageCoverages) {
         assertThat(packageCoverages.collect(Collectors.toList()))
-                .usingElementComparator(Comparator.comparing(Named::getName))
+                .usingElementComparator(Comparator.comparing(NamedImpl::getName))
                 .containsOnly(new PackageCoverage("com.aurea.jacoco", emptyList()));
     }
 }

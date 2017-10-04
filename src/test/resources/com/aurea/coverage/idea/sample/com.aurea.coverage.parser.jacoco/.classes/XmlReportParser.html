@@ -1,0 +1,299 @@
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html id="htmlId">
+<head>
+  <title>Coverage Report :: XmlReportParser</title>
+  <style type="text/css">
+    @import "../../.css/coverage.css";
+  </style>
+</head>
+
+<body>
+<div class="header"></div>
+
+<div class="content">
+<div class="breadCrumbs">
+    [ <a href="../../index.html">all classes</a> ]
+    [ <a href="../index.html">com.aurea.coverage.parser.jacoco</a> ]
+</div>
+
+<h1>Coverage Summary for Class: XmlReportParser (com.aurea.coverage.parser.jacoco)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">XmlReportParser</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/ 1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (16/ 16)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    94.3%
+  </span>
+  <span class="absValue">
+    (99/ 105)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<div class="sourceCode"><i>1</i>&nbsp;package com.aurea.coverage.parser.jacoco;
+<i>2</i>&nbsp;
+<i>3</i>&nbsp;import com.aurea.coverage.CoverageIndex;
+<i>4</i>&nbsp;import com.aurea.coverage.parser.CoverageParser;
+<i>5</i>&nbsp;import com.aurea.coverage.parser.CoverageParserException;
+<i>6</i>&nbsp;import com.aurea.coverage.unit.CoverageUnit;
+<i>7</i>&nbsp;import com.aurea.coverage.unit.MethodCoverage;
+<i>8</i>&nbsp;import com.aurea.coverage.unit.ModuleCoverage;
+<i>9</i>&nbsp;import com.aurea.coverage.unit.PackageCoverage;
+<i>10</i>&nbsp;import com.aurea.coverage.unit.ClassCoverage;
+<i>11</i>&nbsp;import org.jacoco.report.JavaNames;
+<i>12</i>&nbsp;
+<i>13</i>&nbsp;import javax.xml.namespace.QName;
+<i>14</i>&nbsp;import javax.xml.stream.XMLEventReader;
+<i>15</i>&nbsp;import javax.xml.stream.XMLInputFactory;
+<i>16</i>&nbsp;import javax.xml.stream.XMLStreamException;
+<i>17</i>&nbsp;import javax.xml.stream.events.EndElement;
+<i>18</i>&nbsp;import javax.xml.stream.events.StartElement;
+<i>19</i>&nbsp;import javax.xml.stream.events.XMLEvent;
+<i>20</i>&nbsp;import java.io.File;
+<i>21</i>&nbsp;import java.io.FileInputStream;
+<i>22</i>&nbsp;import java.io.FileNotFoundException;
+<i>23</i>&nbsp;import java.io.IOException;
+<i>24</i>&nbsp;import java.io.InputStream;
+<i>25</i>&nbsp;import java.nio.file.Files;
+<i>26</i>&nbsp;import java.nio.file.Path;
+<i>27</i>&nbsp;import java.util.ArrayList;
+<i>28</i>&nbsp;import java.util.List;
+<i>29</i>&nbsp;import java.util.Objects;
+<i>30</i>&nbsp;import java.util.function.Function;
+<i>31</i>&nbsp;import java.util.function.Supplier;
+<i>32</i>&nbsp;
+<i>33</i>&nbsp;public class XmlReportParser implements CoverageParser {
+<i>34</i>&nbsp;
+<i>35</i>&nbsp;    public static final String JACOCO_XML_FILE_NAME = &quot;jacoco.xml&quot;;
+<i>36</i>&nbsp;
+<i>37</i>&nbsp;    static final String NULL_PATH_ERROR = &quot;Path to Jacoco xml should not be null&quot;;
+<i>38</i>&nbsp;    static final String NULL_INPUT_STREAM_ERROR = &quot;InputStream to Jacoco xml should not be null&quot;;
+<i>39</i>&nbsp;    static final String INVALID_PATH_ERROR = &quot;jacoco.xml has not been found in %s&quot;;
+<i>40</i>&nbsp;    static final String PARSE_ERROR = &quot;Failed to parse %s&quot;;
+<i>41</i>&nbsp;    static final String IO_ERROR = &quot;Failed to close %s&quot;;
+<i>42</i>&nbsp;
+<b class="fc"><i>43</i>&nbsp;    private static final QName MISSED = new QName(&quot;missed&quot;);</b>
+<b class="fc"><i>44</i>&nbsp;    private static final QName NAME = new QName(&quot;name&quot;);</b>
+<b class="fc"><i>45</i>&nbsp;    private static final QName DESC = new QName(&quot;desc&quot;);</b>
+<b class="fc"><i>46</i>&nbsp;    private static final QName COVERED = new QName(&quot;covered&quot;);</b>
+<i>47</i>&nbsp;
+<i>48</i>&nbsp;    private XMLEventReader xmlEventReader;
+<i>49</i>&nbsp;    private final JavaNames javaNames;
+<i>50</i>&nbsp;    private final Supplier&lt;CoverageIndex&gt; buildStrategy;
+<i>51</i>&nbsp;
+<b class="fc"><i>52</i>&nbsp;    public XmlReportParser(Path path) {</b>
+<b class="fc"><i>53</i>&nbsp;        Objects.requireNonNull(path, NULL_PATH_ERROR);</b>
+<b class="fc"><i>54</i>&nbsp;        File jacocoFile = (Files.isDirectory(path) ? path.resolve(JACOCO_XML_FILE_NAME) : path).toFile();</b>
+<b class="fc"><i>55</i>&nbsp;        if (!jacocoFile.exists()) {</b>
+<b class="fc"><i>56</i>&nbsp;            throw new CoverageParserException(INVALID_PATH_ERROR, path);</b>
+<i>57</i>&nbsp;        }
+<b class="fc"><i>58</i>&nbsp;        buildStrategy = () -&gt; buildFromFile(jacocoFile);</b>
+<b class="fc"><i>59</i>&nbsp;        javaNames = new JavaNames();</b>
+<i>60</i>&nbsp;
+<b class="fc"><i>61</i>&nbsp;    }</b>
+<i>62</i>&nbsp;
+<b class="fc"><i>63</i>&nbsp;    public XmlReportParser(InputStream inputStream) {</b>
+<b class="fc"><i>64</i>&nbsp;        Objects.requireNonNull(inputStream, NULL_INPUT_STREAM_ERROR);</b>
+<b class="fc"><i>65</i>&nbsp;        buildStrategy = () -&gt; buildFromIs(inputStream);</b>
+<b class="fc"><i>66</i>&nbsp;        javaNames = new JavaNames();</b>
+<b class="fc"><i>67</i>&nbsp;    }</b>
+<i>68</i>&nbsp;
+<i>69</i>&nbsp;    @Override
+<i>70</i>&nbsp;    public CoverageIndex buildIndex() {
+<b class="fc"><i>71</i>&nbsp;        return buildStrategy.get();</b>
+<i>72</i>&nbsp;    }
+<i>73</i>&nbsp;
+<i>74</i>&nbsp;    private CoverageIndex buildFromFile(File jacocoFile) {
+<b class="fc"><i>75</i>&nbsp;        try (FileInputStream fis = new FileInputStream(jacocoFile)) {</b>
+<b class="fc"><i>76</i>&nbsp;            ModuleCoverage moduleCoverage = buildFrom(fis);</b>
+<b class="fc"><i>77</i>&nbsp;            return new CoverageIndex(moduleCoverage);</b>
+<b class="fc"><i>78</i>&nbsp;        } catch (FileNotFoundException e) {</b>
+<b class="fc"><i>79</i>&nbsp;            throw new CoverageParserException(INVALID_PATH_ERROR, e, jacocoFile.toPath());</b>
+<b class="fc"><i>80</i>&nbsp;        } catch (XMLStreamException e) {</b>
+<b class="fc"><i>81</i>&nbsp;            throw new CoverageParserException(PARSE_ERROR, e, jacocoFile.toPath());</b>
+<b class="nc"><i>82</i>&nbsp;        } catch (IOException e) {</b>
+<b class="nc"><i>83</i>&nbsp;            throw new CoverageParserException(IO_ERROR, e, jacocoFile);</b>
+<i>84</i>&nbsp;        } finally {
+<b class="fc"><i>85</i>&nbsp;            closeReader();</b>
+<i>86</i>&nbsp;        }
+<i>87</i>&nbsp;    }
+<i>88</i>&nbsp;
+<i>89</i>&nbsp;    private CoverageIndex buildFromIs(InputStream is) {
+<i>90</i>&nbsp;        try {
+<b class="fc"><i>91</i>&nbsp;            ModuleCoverage moduleCoverage = buildFrom(is);</b>
+<b class="fc"><i>92</i>&nbsp;            return new CoverageIndex(moduleCoverage);</b>
+<b class="nc"><i>93</i>&nbsp;        } catch (XMLStreamException e) {</b>
+<b class="nc"><i>94</i>&nbsp;            throw new CoverageParserException(PARSE_ERROR, e, is);</b>
+<i>95</i>&nbsp;        } finally {
+<b class="fc"><i>96</i>&nbsp;            closeReader();</b>
+<i>97</i>&nbsp;        }
+<i>98</i>&nbsp;    }
+<i>99</i>&nbsp;
+<i>100</i>&nbsp;    private ModuleCoverage buildFrom(InputStream is) throws XMLStreamException {
+<b class="fc"><i>101</i>&nbsp;        ModuleCoverage moduleCoverage = null;</b>
+<b class="fc"><i>102</i>&nbsp;        XMLInputFactory xmlInputFactory = XMLInputFactory.newInstance();</b>
+<b class="fc"><i>103</i>&nbsp;        xmlEventReader = xmlInputFactory.createXMLEventReader(is);</b>
+<b class="fc"><i>104</i>&nbsp;        while (xmlEventReader.hasNext()) {</b>
+<b class="fc"><i>105</i>&nbsp;            XMLEvent xmlEvent = xmlEventReader.nextEvent();</b>
+<b class="fc"><i>106</i>&nbsp;            if (xmlEvent.isStartElement()) {</b>
+<b class="fc"><i>107</i>&nbsp;                StartElement startElement = xmlEvent.asStartElement();</b>
+<b class="fc"><i>108</i>&nbsp;                if (isStartOf(startElement, &quot;report&quot;)) {</b>
+<b class="fc"><i>109</i>&nbsp;                    moduleCoverage = parseModule(startElement);</b>
+<i>110</i>&nbsp;                }
+<i>111</i>&nbsp;            }
+<b class="fc"><i>112</i>&nbsp;        }</b>
+<b class="fc"><i>113</i>&nbsp;        return moduleCoverage;</b>
+<i>114</i>&nbsp;    }
+<i>115</i>&nbsp;
+<i>116</i>&nbsp;    private ModuleCoverage parseModule(StartElement moduleElement) {
+<b class="fc"><i>117</i>&nbsp;        String name = getName(moduleElement);</b>
+<b class="fc"><i>118</i>&nbsp;        List&lt;PackageCoverage&gt; packageCoverages = parse(&quot;module&quot;, &quot;package&quot;, this::parsePackage);</b>
+<b class="fc"><i>119</i>&nbsp;        return new ModuleCoverage(name, packageCoverages);</b>
+<i>120</i>&nbsp;    }
+<i>121</i>&nbsp;
+<i>122</i>&nbsp;    private PackageCoverage parsePackage(StartElement packageElement) {
+<b class="fc"><i>123</i>&nbsp;        String name = getName(packageElement).replace(&quot;/&quot;, &quot;.&quot;);</b>
+<b class="fc"><i>124</i>&nbsp;        List&lt;ClassCoverage&gt; classCoverages = parse(&quot;package&quot;, &quot;class&quot;, this::parseClass);</b>
+<b class="fc"><i>125</i>&nbsp;        return new PackageCoverage(name, classCoverages);</b>
+<i>126</i>&nbsp;    }
+<i>127</i>&nbsp;
+<i>128</i>&nbsp;    private ClassCoverage parseClass(StartElement classElement) {
+<b class="fc"><i>129</i>&nbsp;        String className = getName(classElement);</b>
+<b class="fc"><i>130</i>&nbsp;        String name = className.substring(className.lastIndexOf(&#39;/&#39;) + 1);</b>
+<b class="fc"><i>131</i>&nbsp;        List&lt;MethodCoverage&gt; methodCoverages = parse(&quot;class&quot;, &quot;method&quot;, (element) -&gt; parseMethod(element, className));</b>
+<b class="fc"><i>132</i>&nbsp;        return new ClassCoverage(name, methodCoverages);</b>
+<i>133</i>&nbsp;    }
+<i>134</i>&nbsp;
+<i>135</i>&nbsp;    private MethodCoverage parseMethod(StartElement methodElement, String className) {
+<b class="fc"><i>136</i>&nbsp;        String name = getName(methodElement).replace(&quot;&amp;lt;&quot;, &quot;&lt;&quot;).replace(&quot;&amp;gt;&quot;, &quot;&gt;&quot;);</b>
+<b class="fc"><i>137</i>&nbsp;        String desc = methodElement.getAttributeByName(DESC).getValue();</b>
+<b class="fc"><i>138</i>&nbsp;        String methodName = javaNames.getMethodName(className, name, desc, null);</b>
+<b class="fc"><i>139</i>&nbsp;        int missedInstructions = 0;</b>
+<b class="fc"><i>140</i>&nbsp;        int coveredInstructions = 0;</b>
+<b class="fc"><i>141</i>&nbsp;        int missedLocs = 0;</b>
+<b class="fc"><i>142</i>&nbsp;        int coveredLocs = 0;</b>
+<b class="fc"><i>143</i>&nbsp;        int counterIndex = 0;</b>
+<b class="fc"><i>144</i>&nbsp;        while (xmlEventReader.hasNext()) {</b>
+<i>145</i>&nbsp;            try {
+<b class="fc"><i>146</i>&nbsp;                XMLEvent xmlEvent = xmlEventReader.nextEvent();</b>
+<b class="fc"><i>147</i>&nbsp;                if (xmlEvent.isStartElement()) {</b>
+<b class="fc"><i>148</i>&nbsp;                    StartElement startElement = xmlEvent.asStartElement();</b>
+<b class="fc"><i>149</i>&nbsp;                    if (isStartOf(startElement, &quot;counter&quot;)) {</b>
+<b class="fc"><i>150</i>&nbsp;                        if (counterIndex == 0) {</b>
+<b class="fc"><i>151</i>&nbsp;                            missedInstructions = Integer.parseInt(startElement.getAttributeByName(MISSED).getValue());</b>
+<b class="fc"><i>152</i>&nbsp;                            coveredInstructions = Integer.parseInt(startElement.getAttributeByName(COVERED).getValue());</b>
+<b class="fc"><i>153</i>&nbsp;                        } else if (counterIndex == 1) {</b>
+<b class="fc"><i>154</i>&nbsp;                            missedLocs = Integer.parseInt(startElement.getAttributeByName(MISSED).getValue());</b>
+<b class="fc"><i>155</i>&nbsp;                            coveredLocs = Integer.parseInt(startElement.getAttributeByName(COVERED).getValue());</b>
+<i>156</i>&nbsp;                        }
+<b class="fc"><i>157</i>&nbsp;                        counterIndex++;</b>
+<i>158</i>&nbsp;                    }
+<i>159</i>&nbsp;                }
+<b class="fc"><i>160</i>&nbsp;                if (isEndOf(xmlEvent, &quot;method&quot;)) {</b>
+<b class="fc"><i>161</i>&nbsp;                    break;</b>
+<i>162</i>&nbsp;                }
+<b class="fc"><i>163</i>&nbsp;            } catch (XMLStreamException e) {</b>
+<b class="fc"><i>164</i>&nbsp;                throw new CoverageParserException(PARSE_ERROR, e, &quot;counter of &quot; + getName(methodElement));</b>
+<b class="fc"><i>165</i>&nbsp;            }</b>
+<i>166</i>&nbsp;        }
+<b class="fc"><i>167</i>&nbsp;        return new MethodCoverage(methodName, coveredInstructions, missedInstructions, coveredLocs, missedLocs);</b>
+<i>168</i>&nbsp;    }
+<i>169</i>&nbsp;
+<i>170</i>&nbsp;    private &lt;T extends CoverageUnit&gt; List&lt;T&gt; parse(String unitType, String subUnitType, Function&lt;StartElement, T&gt; subUnitParser) {
+<b class="fc"><i>171</i>&nbsp;        List&lt;T&gt; subUnits = new ArrayList&lt;&gt;();</b>
+<b class="fc"><i>172</i>&nbsp;        while (xmlEventReader.hasNext()) {</b>
+<i>173</i>&nbsp;            try {
+<b class="fc"><i>174</i>&nbsp;                XMLEvent xmlEvent = xmlEventReader.nextEvent();</b>
+<b class="fc"><i>175</i>&nbsp;                if (xmlEvent.isStartElement()) {</b>
+<b class="fc"><i>176</i>&nbsp;                    StartElement startElement = xmlEvent.asStartElement();</b>
+<b class="fc"><i>177</i>&nbsp;                    if (startElement.getName().getLocalPart().equals(subUnitType)) {</b>
+<b class="fc"><i>178</i>&nbsp;                        subUnits.add(subUnitParser.apply(startElement));</b>
+<i>179</i>&nbsp;                    }
+<i>180</i>&nbsp;                }
+<b class="fc"><i>181</i>&nbsp;                if (isEndOf(xmlEvent, unitType)) {</b>
+<b class="fc"><i>182</i>&nbsp;                    break;</b>
+<i>183</i>&nbsp;                }
+<b class="fc"><i>184</i>&nbsp;            } catch (XMLStreamException e) {</b>
+<b class="fc"><i>185</i>&nbsp;                throw new CoverageParserException(PARSE_ERROR, e, unitType);</b>
+<b class="fc"><i>186</i>&nbsp;            }</b>
+<i>187</i>&nbsp;        }
+<b class="fc"><i>188</i>&nbsp;        return subUnits;</b>
+<i>189</i>&nbsp;    }
+<i>190</i>&nbsp;
+<i>191</i>&nbsp;    private String getName(StartElement element) {
+<b class="fc"><i>192</i>&nbsp;        return element.getAttributeByName(NAME).getValue();</b>
+<i>193</i>&nbsp;    }
+<i>194</i>&nbsp;
+<i>195</i>&nbsp;    private boolean isStartOf(StartElement element, String name) {
+<b class="fc"><i>196</i>&nbsp;        return element.getName().getLocalPart().equals(name);</b>
+<i>197</i>&nbsp;    }
+<i>198</i>&nbsp;
+<i>199</i>&nbsp;    private boolean isEndOf(XMLEvent event, String name) {
+<b class="fc"><i>200</i>&nbsp;        if (event.isEndElement()) {</b>
+<b class="fc"><i>201</i>&nbsp;            EndElement endElement = event.asEndElement();</b>
+<b class="fc"><i>202</i>&nbsp;            return endElement.getName().getLocalPart().equals(name);</b>
+<i>203</i>&nbsp;        }
+<b class="fc"><i>204</i>&nbsp;        return false;</b>
+<i>205</i>&nbsp;    }
+<i>206</i>&nbsp;
+<i>207</i>&nbsp;    private void closeReader() {
+<b class="fc"><i>208</i>&nbsp;        if (null != xmlEventReader) {</b>
+<i>209</i>&nbsp;            try {
+<b class="fc"><i>210</i>&nbsp;                xmlEventReader.close();</b>
+<b class="nc"><i>211</i>&nbsp;            } catch (XMLStreamException e) {</b>
+<b class="nc"><i>212</i>&nbsp;                throw new CoverageParserException(&quot;Failed to close XMLStreamReader&quot;, e);</b>
+<b class="fc"><i>213</i>&nbsp;            }</b>
+<i>214</i>&nbsp;        }
+<b class="fc"><i>215</i>&nbsp;    }</b>
+<i>216</i>&nbsp;}
+</div>
+</div>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2017-10-04 10:32</div>
+</div>
+</body>
+</html>

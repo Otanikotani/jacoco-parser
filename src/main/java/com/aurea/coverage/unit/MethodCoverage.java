@@ -2,7 +2,7 @@ package com.aurea.coverage.unit;
 
 import java.util.Objects;
 
-public final class MethodCoverage extends Named implements CoverageUnit {
+public final class MethodCoverage extends NamedImpl implements CoverageUnit {
 
     public static final MethodCoverage EMPTY = new MethodCoverage("", 0, 0, 0, 0);
 

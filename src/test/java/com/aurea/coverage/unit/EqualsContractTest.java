@@ -1,9 +1,5 @@
 package com.aurea.coverage.unit;
 
-import com.aurea.coverage.unit.ClassCoverage;
-import com.aurea.coverage.unit.MethodCoverage;
-import com.aurea.coverage.unit.ModuleCoverage;
-import com.aurea.coverage.unit.PackageCoverage;
 import nl.jqno.equalsverifier.EqualsVerifier;
 import org.junit.Test;
 
@@ -16,7 +12,7 @@ public class EqualsContractTest {
 
     @Test
     public void equalsContractForClassCoverage() {
-        EqualsVerifier.forClass(ClassCoverage.class).verify();
+        EqualsVerifier.forClass(ClassCoverageImpl.class).verify();
     }
 
     @Test

@@ -10,9 +10,9 @@ public final class PackageCoverage extends MethodContainerUnit {
 
     public static final PackageCoverage EMPTY = new PackageCoverage("", Collections.emptyList());
 
-    private final List<ClassCoverage> classCoverages;
+    private final List<? extends ClassCoverage> classCoverages;
 
-    public PackageCoverage(String name, List<ClassCoverage> classCoverages) {
+    public PackageCoverage(String name, List<? extends ClassCoverage> classCoverages) {
         super(name);
         this.classCoverages = classCoverages;
     }
@@ -25,11 +25,11 @@ public final class PackageCoverage extends MethodContainerUnit {
         return packageCoverage.getName().startsWith(getName());
     }
 
-    public List<ClassCoverage> getClassCoverages() {
+    public List<? extends ClassCoverage> getClassCoverages() {
         return classCoverages;
     }
 
-    public Stream<ClassCoverage> classCoverages() {
+    public Stream<? extends ClassCoverage> classCoverages() {
         return classCoverages.stream();
     }
 

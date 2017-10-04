@@ -7,7 +7,7 @@ import com.aurea.coverage.unit.CoverageUnit;
 import com.aurea.coverage.unit.MethodCoverage;
 import com.aurea.coverage.unit.ModuleCoverage;
 import com.aurea.coverage.unit.PackageCoverage;
-import com.aurea.coverage.unit.ClassCoverage;
+import com.aurea.coverage.unit.ClassCoverageImpl;
 import org.jacoco.report.JavaNames;
 
 import javax.xml.namespace.QName;
@@ -121,15 +121,15 @@ public class XmlReportParser implements CoverageParser {
 
     private PackageCoverage parsePackage(StartElement packageElement) {
         String name = getName(packageElement).replace("/", ".");
-        List<ClassCoverage> classCoverages = parse("package", "class", this::parseClass);
+        List<ClassCoverageImpl> classCoverages = parse("package", "class", this::parseClass);
         return new PackageCoverage(name, classCoverages);
     }
 
-    private ClassCoverage parseClass(StartElement classElement) {
+    private ClassCoverageImpl parseClass(StartElement classElement) {
         String className = getName(classElement);
         String name = className.substring(className.lastIndexOf('/') + 1);
         List<MethodCoverage> methodCoverages = parse("class", "method", (element) -> parseMethod(element, className));
-        return new ClassCoverage(name, methodCoverages);
+        return new ClassCoverageImpl(name, methodCoverages);
     }
 
     private MethodCoverage parseMethod(StartElement methodElement, String className) {

@@ -2,7 +2,7 @@ package com.aurea.coverage.unit;
 
 import java.util.stream.Stream;
 
-public abstract class MethodContainerUnit extends Named implements CoverageUnit {
+public abstract class MethodContainerUnit extends NamedImpl implements CoverageUnit {
 
     protected MethodContainerUnit(String name) {
         super(name);
