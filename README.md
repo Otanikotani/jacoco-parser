@@ -13,7 +13,7 @@ Usage:
 JacocoIndex index = JacocoParsers.fromXml(Paths.get("path-to-mars"));
 ModuleCoverage moduleCoverage = index.getModuleCoverage();
 MethodCoverage methodCoverage = moduleCoverage.methodCoverages()
-    .findFirst((mc -> mc.getName().equals("amore")))
+    .findFirst(mc -> mc.getName().equals("amore"))
     .orElse(MethodCoverage.EMPTY);
 ```
                          
@@ -29,7 +29,7 @@ Usage:
 CoverageIndex index = IdeaParsers.fromHtml(Paths.get("path-to-directory-with-html-report"));
 ModuleCoverage moduleCoverage = index.getModuleCoverage();
 ClassCoverage coverage = moduleCoverage.classCoverages()
-    .findFirst((cc -> cc.getName.equals("Foo")))
+    .findFirst(cc -> cc.getName.equals("Foo"))
     .orElse(IdeaClassCoverage.EMPTY);
 ```                         
                          
