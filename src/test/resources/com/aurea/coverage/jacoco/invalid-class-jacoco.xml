@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?><!DOCTYPE report PUBLIC "-//JACOCO//DTD Report 1.0//EN" "report.dtd">
+<report name="Eloc">
+    <sessioninfo id="user1964-c0d4bcca" start="1478111016038" dump="1478111017375"/>
+    <package name="com/aurea/jacoco">
+        <class name="com/aurea/jacoco/Duplicate"><>
+            <method name="&lt;init&gt;" desc="(ILcom/google/common/collect/Range;ILjava/lang/String;)V" line="11">
+            </method>
+        </class>
+    </package>
+</report>

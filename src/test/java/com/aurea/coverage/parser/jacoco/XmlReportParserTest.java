@@ -1,6 +1,7 @@
 package com.aurea.coverage.parser.jacoco;
 
 import com.aurea.coverage.CoverageIndex;
+import com.aurea.coverage.SampleFolder;
 import com.aurea.coverage.parser.CoverageParserException;
 import com.aurea.coverage.parser.JacocoParsers;
 import com.aurea.coverage.unit.ClassCoverage;
@@ -8,6 +9,7 @@ import com.aurea.coverage.unit.MethodCoverage;
 import com.aurea.coverage.unit.ModuleCoverage;
 import com.aurea.coverage.unit.Named;
 import com.aurea.coverage.unit.PackageCoverage;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -17,8 +19,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.net.URISyntaxException;
-import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Comparator;
@@ -35,19 +35,12 @@ import static org.junit.Assert.fail;
 
 public class XmlReportParserTest {
 
-    private static final Path JACOCO_EXAMPLES;
+    @ClassRule
+    public static final SampleFolder SAMPLES = new SampleFolder("jacoco");
+
     private static final Supplier<IllegalStateException> FAIL = () -> {
         throw new IllegalStateException("Test coverage report is invalid");
     };
-
-    static {
-        URL url = XmlReportParserTest.class.getResource("../jacoco");
-        try {
-            JACOCO_EXAMPLES = Paths.get(url.toURI());
-        } catch (URISyntaxException e) {
-            throw new IllegalStateException("Failed to find ../jacoco folder");
-        }
-    }
 
     @Rule
     public final ExpectedException expectedException = ExpectedException.none();
@@ -60,7 +53,7 @@ public class XmlReportParserTest {
         expectedException.expect(NullPointerException.class);
         expectedException.expectMessage(NULL_PATH_ERROR);
 
-        JacocoParsers.fromXml((Path)null);
+        JacocoParsers.fromXml((Path) null);
     }
 
     @Test
@@ -97,7 +90,7 @@ public class XmlReportParserTest {
 
     @Test
     public void buildIndexFailsWhenFileContainsErrorInMethodElement() {
-        Path path = JACOCO_EXAMPLES.resolve("invalid-method-jacoco.xml");
+        Path path = SAMPLES.resolve("invalid-method-jacoco.xml");
         expectedException.expect(CoverageParserException.class);
         expectedException.expectMessage(String.format(PARSE_ERROR, "counter of <init>"));
 
@@ -106,7 +99,7 @@ public class XmlReportParserTest {
 
     @Test
     public void buildIndexFailsWhenFileContainsErrorInClassElement() {
-        Path path = JACOCO_EXAMPLES.resolve("invalid-class-jacoco.xml");
+        Path path = SAMPLES.resolve("invalid-class-jacoco.xml");
         expectedException.expect(CoverageParserException.class);
         expectedException.expectMessage(String.format(PARSE_ERROR, "class"));
 
@@ -115,7 +108,7 @@ public class XmlReportParserTest {
 
     @Test
     public void buildIndexFailsWhenFileContainsErrorInPackageElement() {
-        Path path = JACOCO_EXAMPLES.resolve("invalid-package-jacoco.xml");
+        Path path = SAMPLES.resolve("invalid-package-jacoco.xml");
         expectedException.expect(CoverageParserException.class);
         expectedException.expectMessage(String.format(PARSE_ERROR, "package"));
 
@@ -124,7 +117,7 @@ public class XmlReportParserTest {
 
     @Test
     public void shouldFindJacocoXmlWhenGivenPathToDirectory() {
-        CoverageIndex coverageIndex = JacocoParsers.fromXml(JACOCO_EXAMPLES);
+        CoverageIndex coverageIndex = JacocoParsers.fromXml(SAMPLES.resolve("sample"));
 
         assertPackages(coverageIndex.getModuleCoverage().packageCoverages());
         assertClasses(coverageIndex.getModuleCoverage().classCoverages());
@@ -133,7 +126,7 @@ public class XmlReportParserTest {
 
     @Test
     public void shouldFindJacocoXmlWhenGivenInputStream() throws FileNotFoundException {
-        FileInputStream fileInputStream = new FileInputStream(JACOCO_EXAMPLES.resolve("jacoco.xml").toFile());
+        FileInputStream fileInputStream = new FileInputStream(SAMPLES.resolve("sample").resolve("jacoco.xml").toFile());
         CoverageIndex coverageIndex = JacocoParsers.fromXml(fileInputStream);
 
         assertPackages(coverageIndex.getModuleCoverage().packageCoverages());
@@ -143,7 +136,7 @@ public class XmlReportParserTest {
 
     @Test
     public void totalOfClassShouldBeEqualToSumOfItsMethods() {
-        CoverageIndex coverageIndex = JacocoParsers.fromXml(JACOCO_EXAMPLES);
+        CoverageIndex coverageIndex = JacocoParsers.fromXml(SAMPLES.resolve("sample"));
         ClassCoverage classCoverage = coverageIndex.getModuleCoverage().classCoverages().findFirst().orElseThrow(FAIL);
         int sumOfMethods = classCoverage.getMethodCoverages().stream().mapToInt(MethodCoverage::getTotal).sum();
 
@@ -152,7 +145,7 @@ public class XmlReportParserTest {
 
     @Test
     public void totalOfPackageShouldBeEqualToSumOfItsMethods() {
-        CoverageIndex coverageIndex = JacocoParsers.fromXml(JACOCO_EXAMPLES);
+        CoverageIndex coverageIndex = JacocoParsers.fromXml(SAMPLES.resolve("sample"));
         PackageCoverage packageCoverage = coverageIndex.getModuleCoverage().packageCoverages().findFirst().orElseThrow(FAIL);
         int sumOfMethods = packageCoverage.getClassCoverages().stream().flatMap(ClassCoverage::methodCoverages)
                 .mapToInt(MethodCoverage::getTotal).sum();
@@ -162,7 +155,7 @@ public class XmlReportParserTest {
 
     @Test
     public void totalOfModuleShouldBeEqualToSumOfItsMethods() {
-        CoverageIndex coverageIndex = JacocoParsers.fromXml(JACOCO_EXAMPLES);
+        CoverageIndex coverageIndex = JacocoParsers.fromXml(SAMPLES.resolve("sample"));
         ModuleCoverage moduleCoverage = coverageIndex.getModuleCoverage();
         int sumOfMethods = moduleCoverage.getPackageCoverages().stream()
                 .flatMap(PackageCoverage::classCoverages)
@@ -175,7 +168,7 @@ public class XmlReportParserTest {
 
     @Test
     public void readZipArchiveFindsTheJacocoXmlReport() throws FileNotFoundException {
-        CoverageIndex coverageIndex = JacocoParsers.fromArchive(new FileInputStream(JACOCO_EXAMPLES.resolve("jacoco.zip").toFile()));
+        CoverageIndex coverageIndex = JacocoParsers.fromArchive(new FileInputStream(SAMPLES.resolve("zip-file").resolve("jacoco.zip").toFile()));
         ModuleCoverage moduleCoverage = coverageIndex.getModuleCoverage();
 
         assertThat(moduleCoverage.getName()).isEqualTo("jtobDataAccess");
