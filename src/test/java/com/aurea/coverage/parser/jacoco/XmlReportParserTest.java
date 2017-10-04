@@ -2,6 +2,7 @@ package com.aurea.coverage.parser.jacoco;
 
 import com.aurea.coverage.CoverageIndex;
 import com.aurea.coverage.parser.CoverageParserException;
+import com.aurea.coverage.parser.JacocoParsers;
 import com.aurea.coverage.unit.ClassCoverage;
 import com.aurea.coverage.unit.MethodCoverage;
 import com.aurea.coverage.unit.ModuleCoverage;

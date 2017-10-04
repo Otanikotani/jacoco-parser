@@ -1,6 +1,8 @@
-package com.aurea.coverage.parser.jacoco;
+package com.aurea.coverage.parser;
 
 import com.aurea.coverage.CoverageIndex;
+import com.aurea.coverage.parser.jacoco.ArchiveReportParser;
+import com.aurea.coverage.parser.jacoco.XmlReportParser;
 
 import java.io.InputStream;
 import java.nio.file.Path;
