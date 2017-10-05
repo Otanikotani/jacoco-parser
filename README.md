@@ -17,7 +17,7 @@ MethodCoverage methodCoverage = moduleCoverage.methodCoverages()
     .orElse(MethodCoverage.EMPTY);
 ```
                          
-# Intellij IDEA Parses
+# Intellij IDEA Parser
 
 Parses coverage reports from Intellij IDEA.
 
